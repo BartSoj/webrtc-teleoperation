@@ -3,13 +3,22 @@ project(libdatachannel_app)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
+set(CLIENT_SOURCES
+        robot-client/main.cpp
+        robot-client/parse_cl.cpp
+        robot-client/parse_cl.h
+)
+set(GETOPT_SOURCES
+        robot-client/getopt.cpp
+        robot-client/getopt.h
+)
 
 add_subdirectory(deps/json)
 
 find_package(LibDataChannel REQUIRED)
 find_package(Threads REQUIRED)
 
-add_executable(libdatachannel_app main.cpp)
+add_executable(libdatachannel_app ${CLIENT_SOURCES})
 
 set_target_properties(libdatachannel_app PROPERTIES
         CXX_STANDARD 17

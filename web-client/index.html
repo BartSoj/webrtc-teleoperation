@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Robot control</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="script.js"></script>
+</head>
+<body>
+<h1>Robot control with WebRTC</h1>
+<h2>Local ID</h2>
+<p id="localId"></p>
+<h2>Send an offer through signaling</h2>
+<input type="text" id="offerId" placeholder="remote ID" disabled>
+<input type="button" id="offerBtn" value="Offer" disabled>
+<br>
+<h2>Send a message through DataChannel</h2>
+<input type="text" id="sendMsg" placeholder="message" disabled>
+<input type="button" id="sendBtn" value="Send" disabled>
+<br>
+<video id="video-element" muted></video>
+</body>
+</html>
+
