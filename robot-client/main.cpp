@@ -51,7 +51,7 @@ const rtc::SSRC ssrc = 42;
 std::string localId;
 std::unordered_map<std::string, shared_ptr<rtc::PeerConnection>> peerConnectionMap;
 std::unordered_map<std::string, shared_ptr<rtc::DataChannel>> dataChannelMap;
-shared_ptr<rtc::Track> track;
+std::unordered_map<std::string, shared_ptr<rtc::Track>> trackMap;
 
 shared_ptr<rtc::PeerConnection> createPeerConnection(const rtc::Configuration &config,
                                                      weak_ptr<rtc::WebSocket> wws, std::string id);
@@ -61,6 +61,8 @@ void streamVideoLoop();
 void sendCounterLoop();
 
 void addClientsLoop(const rtc::Configuration &config, shared_ptr<rtc::WebSocket> ws);
+
+void broadcastMessage(const std::string &message);
 
 std::string randomId(size_t length);
 
@@ -163,9 +165,13 @@ int main(int argc, char **argv) try {
     std::cout << "Waiting for signaling to be connected..." << std::endl;
     wsFuture.get();
 
-    streamVideoLoop();
-//    sendCounterLoop();
-//    addClientsLoop(config, ws);
+    std::thread streamVideoThread(streamVideoLoop);
+    std::thread sendCounterThread(sendCounterLoop);
+    std::thread addClientsThread(addClientsLoop, config, ws);
+
+    streamVideoThread.join();
+    sendCounterThread.join();
+    addClientsThread.join();
 
     std::cout << "Cleaning up..." << std::endl;
 
@@ -188,7 +194,8 @@ shared_ptr<rtc::PeerConnection> createPeerConnection(const rtc::Configuration &c
     rtc::Description::Video media("video", rtc::Description::Direction::SendOnly);
     media.addH264Codec(96); // Must match the payload type of the external h264 RTP stream
     media.addSSRC(ssrc, "video-send");
-    track = pc->addTrack(media);
+    auto track = pc->addTrack(media);
+    trackMap.emplace(id, track);
 
     pc->onStateChange(
             [](rtc::PeerConnection::State state) { std::cout << "State: " << state << std::endl; });
@@ -257,17 +264,22 @@ void streamVideoLoop() {
     int rcvBufSize = 212992;
     setsockopt(sock, SOL_SOCKET, SO_RCVBUF, reinterpret_cast<const char *>(&rcvBufSize),
                sizeof(rcvBufSize));
+
     // Receive from UDP
     char buffer[BUFFER_SIZE];
     int len;
     while ((len = recv(sock, buffer, BUFFER_SIZE, 0)) >= 0) {
-        if (len < sizeof(rtc::RtpHeader) || track == nullptr || !track->isOpen())
+        if (len < sizeof(rtc::RtpHeader))
             continue;
 
         auto rtp = reinterpret_cast<rtc::RtpHeader *>(buffer);
         rtp->setSsrc(ssrc);
 
-        track->send(reinterpret_cast<const std::byte *>(buffer), len);
+        for (const auto &[id, track]: trackMap) {
+            if (track != nullptr && track->isOpen()) {
+                track->send(reinterpret_cast<const std::byte *>(buffer), len);
+            }
+        }
     }
 }
 
@@ -276,11 +288,7 @@ void sendCounterLoop() {
     while (true) {
         std::string message = "Counter: " + std::to_string(counter);
         std::cout << "Sending message " << counter << std::endl;
-        for (const auto &[id, dc]: dataChannelMap) {
-            if (dc && dc->isOpen()) {
-                dc->send(message);
-            }
-        }
+        broadcastMessage(message);
         std::this_thread::sleep_for(1s);
         counter++;
     }
@@ -330,6 +338,14 @@ void addClientsLoop(const rtc::Configuration &config, shared_ptr<rtc::WebSocket>
         dataChannelMap.emplace(id, dc);
 
         pc->setLocalDescription();
+    }
+}
+
+void broadcastMessage(const std::string &message) {
+    for (const auto &[id, dc]: dataChannelMap) {
+        if (dc->isOpen()) {
+            dc->send(message);
+        }
     }
 }
 
