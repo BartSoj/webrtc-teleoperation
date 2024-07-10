@@ -14,8 +14,6 @@
 
 #include "rtc/rtc.hpp"
 
-#include "parse_cl.h"
-
 #include "nlohmann/json.hpp"
 
 #include <cstddef>
@@ -67,29 +65,12 @@ void broadcastMessage(const std::string &message);
 std::string randomId(size_t length);
 
 int main(int argc, char **argv) try {
-    Cmdline params(argc, argv);
-
     rtc::InitLogger(rtc::LogLevel::Info);
 
     rtc::Configuration config;
-    std::string stunServer = "";
-    if (params.noStun()) {
-        std::cout
-                << "No STUN server is configured. Only local hosts and public IP addresses supported."
-                << std::endl;
-    } else {
-        if (params.stunServer().substr(0, 5).compare("stun:") != 0) {
-            stunServer = "stun:";
-        }
-        stunServer += params.stunServer() + ":" + std::to_string(params.stunPort());
-        std::cout << "STUN server is " << stunServer << std::endl;
-        config.iceServers.emplace_back(stunServer);
-    }
-
-    if (params.udpMux()) {
-        std::cout << "ICE UDP mux enabled" << std::endl;
-        config.enableIceUdpMux = true;
-    }
+    std::string stunServer = "stun:stun.l.google.com:19302";
+    std::cout << "STUN server is " << stunServer << std::endl;
+    config.iceServers.emplace_back(stunServer);
 
     localId = randomId(4);
     std::cout << "The local ID is " << localId << std::endl;
@@ -154,10 +135,7 @@ int main(int argc, char **argv) try {
         }
     });
 
-    const std::string wsPrefix =
-            params.webSocketServer().find("://") == std::string::npos ? "ws://" : "";
-    const std::string url = wsPrefix + params.webSocketServer() + ":" +
-                            std::to_string(params.webSocketPort()) + "/" + localId;
+    const std::string url = "ws://10.10.108.20:8000/" + localId; // TODO: Change to signaling server URL
 
     std::cout << "WebSocket URL is " << url << std::endl;
     ws->open(url);
