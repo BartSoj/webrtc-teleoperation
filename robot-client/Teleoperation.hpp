@@ -5,19 +5,15 @@
 
 #include "rtc/rtc.hpp"
 
-#include <cstddef>
-#include <algorithm>
-#include <chrono>
+#include "nlohmann/json.hpp"
+
 #include <future>
 #include <iostream>
 #include <memory>
-#include <random>
 #include <stdexcept>
 #include <utility>
-#include <thread>
 #include <unordered_map>
 
-using namespace std::chrono_literals;
 using std::shared_ptr;
 using std::weak_ptr;
 using std::future;
@@ -32,13 +28,20 @@ public:
 
     void broadcastMessage(const std::string &message);
 
-    void streamVideoLoop();
-
-    void sendCounterLoop();
-
-    void addClientsLoop();
-
     void close();
+
+    const std::string &getLocalId() const { return localId; }
+
+    const rtc::Configuration &getConfig() const { return config; }
+
+    std::shared_ptr<rtc::WebSocket> getWebSocket() const { return ws; }
+
+    const std::unordered_map<std::string, std::shared_ptr<PeerConnection>> &
+    getPeerConnectionMap() const { return peerConnectionMap; }
+
+    void addPeerConnection(const std::string &id, std::shared_ptr<PeerConnection> pc) {
+        peerConnectionMap.emplace(id, std::move(pc));
+    }
 
 
 private:
@@ -47,8 +50,6 @@ private:
     shared_ptr<rtc::WebSocket> ws;
     std::promise<void> wsPromise;
     future<void> wsFuture;
-    const rtc::SSRC SSRC = 42;
-    const int BUFFER_SIZE = 2048;
     std::string localId;
     std::unordered_map<std::string, shared_ptr<PeerConnection>> peerConnectionMap;
 };

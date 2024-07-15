@@ -1,17 +1,5 @@
 #include "PeerConnection.hpp"
 
-#include "rtc/rtc.hpp"
-
-#include "nlohmann/json.hpp"
-
-#include <cstddef>
-#include <iostream>
-#include <memory>
-#include <utility>
-#include <thread>
-
-#include <sys/socket.h>
-
 using namespace std::chrono_literals;
 using std::shared_ptr;
 using std::weak_ptr;

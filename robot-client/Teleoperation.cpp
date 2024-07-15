@@ -1,10 +1,5 @@
 #include "Teleoperation.hpp"
-#include "PeerConnection.hpp"
 
-typedef int SOCKET;
-
-
-using namespace std::chrono_literals;
 using std::shared_ptr;
 using std::weak_ptr;
 using nlohmann::json;
@@ -91,74 +86,6 @@ void Teleoperation::sendMessage(const std::string &remoteId, const std::string &
 void Teleoperation::broadcastMessage(const std::string &message) {
     for (auto &[id, pc]: peerConnectionMap)
         pc->sendMessage(message);
-}
-
-void Teleoperation::streamVideoLoop() {
-    SOCKET sock = socket(AF_INET, SOCK_DGRAM, 0);
-    struct sockaddr_in addr = {};
-    addr.sin_family = AF_INET;
-    addr.sin_addr.s_addr = inet_addr("127.0.0.1");
-    addr.sin_port = htons(6000);
-
-    if (bind(sock, reinterpret_cast<const sockaddr *>(&addr), sizeof(addr)) < 0)
-        throw std::runtime_error("Failed to bind UDP socket on 127.0.0.1:6000");
-
-    int rcvBufSize = 212992;
-    setsockopt(sock, SOL_SOCKET, SO_RCVBUF, reinterpret_cast<const char *>(&rcvBufSize),
-               sizeof(rcvBufSize));
-
-    // Receive from UDP
-    char buffer[BUFFER_SIZE];
-    int len;
-    while ((len = recv(sock, buffer, BUFFER_SIZE, 0)) >= 0) {
-        if (len < sizeof(rtc::RtpHeader))
-            continue;
-
-        auto rtp = reinterpret_cast<rtc::RtpHeader *>(buffer);
-        rtp->setSsrc(SSRC);
-
-        for (const auto &[id, pc]: peerConnectionMap) {
-            pc->sendVideo(reinterpret_cast<const std::byte *>(buffer), len);
-        }
-    }
-}
-
-void Teleoperation::sendCounterLoop() {
-    int counter = 0;
-    while (counter < 1000) {
-        std::string message = "Counter: " + std::to_string(counter);
-        std::cout << "Sending message " << counter << std::endl;
-        broadcastMessage(message);
-        std::this_thread::sleep_for(1s);
-        counter++;
-    }
-}
-
-void Teleoperation::addClientsLoop() {
-    while (true) {
-        std::string id;
-        std::cout << "Enter a remote ID to send an offer:" << std::endl;
-        std::cin >> id;
-        std::cin.ignore();
-
-        if (id.empty())
-            break;
-
-        if (id == localId) {
-            std::cout << "Invalid remote ID (This is the local ID)" << std::endl;
-            continue;
-        }
-
-        std::cout << "Offering to " + id << std::endl;
-        auto pc = std::make_shared<PeerConnection>(config, ws, localId, id);
-
-        // We are the offerer, so create a data channel to initiate the process
-        const std::string label = "test";
-        std::cout << "Creating DataChannel with label \"" << label << "\"" << std::endl;
-        pc->createDataChannel();
-
-        peerConnectionMap.emplace(id, pc);
-    }
 }
 
 void Teleoperation::close() {
