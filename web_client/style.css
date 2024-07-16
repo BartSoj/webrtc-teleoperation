@@ -18,3 +18,10 @@ input[type="text"] {
 	padding: 0.4em;
 }
 
+#odometry {
+	margin-top: 1em;
+}
+
+#odometry p {
+	margin: 0.5em 0;
+}

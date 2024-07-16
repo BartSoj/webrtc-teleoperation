@@ -8,10 +8,10 @@ find_package(Threads REQUIRED)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
-add_executable(libdatachannel_app robot-client/main.cpp robot-client/Teleoperation.cpp robot-client/PeerConnection.cpp
-        robot-client/teleop_actions/Action.cpp
-        robot-client/teleop_actions/SendCounterAction.cpp
-        robot-client/teleop_actions/AddClientsAction.cpp
-        robot-client/teleop_actions/StreamVideoAction.cpp)
+add_executable(libdatachannel_app main.cpp ../origin_webrtc_teleop/src/teleop_client/Teleoperation.cpp ../origin_webrtc_teleop/src/teleop_client/PeerConnection.cpp
+        teleop_actions/Action.cpp
+        teleop_actions/SendCounterAction.cpp
+        teleop_actions/AddClientsAction.cpp
+        teleop_actions/StreamVideoAction.cpp)
 
 target_link_libraries(libdatachannel_app LibDataChannel::LibDataChannel Threads::Threads nlohmann_json::nlohmann_json)

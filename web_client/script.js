@@ -8,7 +8,7 @@ window.addEventListener('load', () => {
 
     const localId = randomId(4);
 
-    const url = `ws://10.10.108.20:8000/${localId}`;
+    const url = `ws://10.10.108.50:8000/${localId}`;
 
     const peerConnectionMap = {};
     const dataChannelMap = {};
@@ -20,6 +20,11 @@ window.addEventListener('load', () => {
     const videoElement = document.getElementById('video-element');
     const _localId = document.getElementById('localId');
     _localId.textContent = localId;
+
+    const positionElement = document.getElementById('position');
+    const orientationElement = document.getElementById('orientation');
+    const linearVelocityElement = document.getElementById('linear-velocity');
+    const angularVelocityElement = document.getElementById('angular-velocity');
 
     console.log('Connecting to signaling...');
     openSignaling(url)
@@ -90,7 +95,7 @@ window.addEventListener('load', () => {
         sendLocalDescription(ws, id, pc, 'offer');
     }
 
-// Create and setup a PeerConnection
+    // Create and setup a PeerConnection
     function createPeerConnection(ws, id) {
         const pc = new RTCPeerConnection(config);
         pc.oniceconnectionstatechange = () => console.log(`Connection state: ${pc.iceConnectionState}`);
@@ -122,7 +127,7 @@ window.addEventListener('load', () => {
         return pc;
     }
 
-// Setup a DataChannel
+    // Setup a DataChannel
     function setupDataChannel(dc, id) {
         dc.onopen = () => {
             console.log(`DataChannel from ${id} open`);
@@ -137,7 +142,7 @@ window.addEventListener('load', () => {
         dc.onmessage = (e) => {
             if (typeof (e.data) != 'string') return;
             console.log(`Message from ${id} received: ${e.data}`);
-            document.body.appendChild(document.createTextNode(e.data));
+            updateOdometryData(e.data);
         };
 
         dataChannelMap[id] = dc;
@@ -162,11 +167,20 @@ window.addEventListener('load', () => {
         }));
     }
 
-// Helper function to generate a random ID
+    // Helper function to generate a random ID
     function randomId(length) {
         const characters = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
         const pickRandom = () => characters.charAt(Math.floor(Math.random() * characters.length));
         return [...Array(length)].map(pickRandom).join('');
+    }
+
+    // Update odometry data on the webpage
+    function updateOdometryData(data) {
+        const odometry = JSON.parse(data);
+        positionElement.textContent = `x: ${odometry.position.x}, y: ${odometry.position.y}, z: ${odometry.position.z}`;
+        orientationElement.textContent = `x: ${odometry.orientation.x}, y: ${odometry.orientation.y}, z: ${odometry.orientation.z}, w: ${odometry.orientation.w}`;
+        linearVelocityElement.textContent = `x: ${odometry.linear.x}, y: ${odometry.linear.y}, z: ${odometry.linear.z}`;
+        angularVelocityElement.textContent = `x: ${odometry.angular.x}, y: ${odometry.angular.y}, z: ${odometry.angular.z}`;
     }
 
 });

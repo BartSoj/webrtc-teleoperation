@@ -1,7 +1,7 @@
 #ifndef LIBDATACHANNEL_APP_ACTION_H
 #define LIBDATACHANNEL_APP_ACTION_H
 
-#include "../Teleoperation.hpp"
+#include "../../origin_webrtc_teleop/src/teleop_client/Teleoperation.hpp"
 
 
 class Action {

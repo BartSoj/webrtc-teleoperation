@@ -18,7 +18,7 @@ protected:
     const static int BUFFER_SIZE = 2048;
     SOCKET sock;
     char buffer[BUFFER_SIZE];
-    int len;
+    long int len;
 
 };
 

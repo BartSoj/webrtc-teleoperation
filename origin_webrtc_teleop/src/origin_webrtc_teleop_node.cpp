@@ -10,6 +10,12 @@ OriginWebrtcTeleopNode::OriginWebrtcTeleopNode()
             "camera/color/image_raw", 10, std::bind(&OriginWebrtcTeleopNode::image_topic_callback, this, _1));
     odometry_subscription_ = this->create_subscription<nav_msgs::msg::Odometry>(
             "/robot/odom", 10, std::bind(&OriginWebrtcTeleopNode::odom_topic_callback, this, _1));
+    teleoperation = std::make_shared<Teleoperation>("origin-1");
+    teleoperation->startSignaling();
+}
+
+OriginWebrtcTeleopNode::~OriginWebrtcTeleopNode() {
+    teleoperation->close();
 }
 
 void OriginWebrtcTeleopNode::image_topic_callback(const sensor_msgs::msg::Image &msg) const {
@@ -18,4 +24,37 @@ void OriginWebrtcTeleopNode::image_topic_callback(const sensor_msgs::msg::Image 
 
 void OriginWebrtcTeleopNode::odom_topic_callback(const nav_msgs::msg::Odometry &msg) const {
     RCLCPP_INFO(this->get_logger(), "Odometry: '%s'", msg.header.frame_id.c_str());
+    std::string odometry_data = "{"
+                                "\"position\": {"
+                                "\"x\": " + std::to_string(msg.pose.pose.position.x) + ", "
+                                                                                       "\"y\": " +
+                                std::to_string(msg.pose.pose.position.y) + ", "
+                                                                           "\"z\": " +
+                                std::to_string(msg.pose.pose.position.z) + "}, "
+                                                                           "\"orientation\": {"
+                                                                           "\"x\": " +
+                                std::to_string(msg.pose.pose.orientation.x) + ", "
+                                                                              "\"y\": " +
+                                std::to_string(msg.pose.pose.orientation.y) + ", "
+                                                                              "\"z\": " +
+                                std::to_string(msg.pose.pose.orientation.z) + ", "
+                                                                              "\"w\": " +
+                                std::to_string(msg.pose.pose.orientation.w) + "}, "
+                                                                              "\"linear\": {"
+                                                                              "\"x\": " +
+                                std::to_string(msg.twist.twist.linear.x) + ", "
+                                                                           "\"y\": " +
+                                std::to_string(msg.twist.twist.linear.y) + ", "
+                                                                           "\"z\": " +
+                                std::to_string(msg.twist.twist.linear.z) + "}, "
+                                                                           "\"angular\": {"
+                                                                           "\"x\": " +
+                                std::to_string(msg.twist.twist.angular.x) + ", "
+                                                                            "\"y\": " +
+                                std::to_string(msg.twist.twist.angular.y) + ", "
+                                                                            "\"z\": " +
+                                std::to_string(msg.twist.twist.angular.z) + "}"
+                                                                            "}";
+
+    teleoperation->broadcastMessage(odometry_data);
 }

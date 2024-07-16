@@ -11,7 +11,7 @@ weak_ptr<T> make_weak_ptr(shared_ptr<T> ptr) { return ptr; }
 Teleoperation::Teleoperation(const std::string &localId) {
     this->localId = localId;
 
-    wsUrl = "ws://10.10.108.20:8000/" + localId;
+    wsUrl = "ws://10.10.108.50:8000/" + localId;
 
     rtc::InitLogger(rtc::LogLevel::Info);
 

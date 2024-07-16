@@ -24,7 +24,7 @@ void StreamVideoAction::init() {
 
 bool StreamVideoAction::loop() {
     if ((len = recv(sock, buffer, BUFFER_SIZE, 0)) >= 0) {
-        if (len < sizeof(rtc::RtpHeader))
+        if (static_cast<long unsigned int>(len) < sizeof(rtc::RtpHeader))
             return true;
 
         auto rtp = reinterpret_cast<rtc::RtpHeader *>(buffer);
