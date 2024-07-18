@@ -24,6 +24,14 @@ public:
 
     void startSignaling();
 
+    void onChannelOpen(std::function<void()> callback);
+
+    void onChannelClosed(std::function<void()> callback);
+
+    void onChannelMessage(std::function<void(std::string data)> callback);
+
+    void onChannelControlMessage(std::function<void(std::string)> callback);
+
     void sendMessage(const std::string &remoteId, const std::string &message);
 
     void broadcastMessage(const std::string &message);
@@ -50,6 +58,10 @@ private:
     shared_ptr<rtc::WebSocket> ws;
     std::promise<void> wsPromise;
     future<void> wsFuture;
+    std::function<void()> onChannelOpenCallback;
+    std::function<void()> onChannelClosedCallback;
+    std::function<void(std::string data)> onChannelMessageCallback;
+    std::function<void(std::string)> onChannelControlMessageCallback;
     std::string localId;
     std::unordered_map<std::string, shared_ptr<PeerConnection>> peerConnectionMap;
 };

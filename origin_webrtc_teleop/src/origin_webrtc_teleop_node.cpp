@@ -11,6 +11,23 @@ OriginWebrtcTeleopNode::OriginWebrtcTeleopNode()
     odometry_subscription_ = this->create_subscription<nav_msgs::msg::Odometry>(
             "/robot/odom", 10, std::bind(&OriginWebrtcTeleopNode::odom_topic_callback, this, _1));
     teleoperation = std::make_shared<Teleoperation>("origin-1");
+
+    teleoperation->onChannelOpen([this]() {
+        RCLCPP_INFO(this->get_logger(), "Channel open");
+    });
+
+    teleoperation->onChannelClosed([this]() {
+        RCLCPP_INFO(this->get_logger(), "Channel close");
+    });
+
+    teleoperation->onChannelMessage([this](const std::string &message) {
+        RCLCPP_INFO(this->get_logger(), "Message: '%s'", message.c_str());
+    });
+
+    teleoperation->onChannelControlMessage([this](const std::string &message) {
+        RCLCPP_INFO(this->get_logger(), "Control message: '%s'", message.c_str());
+    });
+
     teleoperation->startSignaling();
 }
 

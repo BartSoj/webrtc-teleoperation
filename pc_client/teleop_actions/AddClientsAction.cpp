@@ -18,12 +18,15 @@ bool AddClientsAction::loop() {
     }
 
     std::cout << "Offering to " + id << std::endl;
-    auto pc = std::make_shared<PeerConnection>(teleoperation->getConfig(), teleoperation->getWebSocket(),
-                                               teleoperation->getLocalId(), id);
+    PeerConnection::Configuration config;
+    config.rtcConfig = teleoperation->getConfig();
+    config.wws = teleoperation->getWebSocket();
+    config.localId = teleoperation->getLocalId();
+    config.remoteId = id;
+    auto pc = std::make_shared<PeerConnection>(config);
 
     // We are the offerer, so create a data channel to initiate the process
-    const std::string label = "test";
-    std::cout << "Creating DataChannel with label \"" << label << "\"" << std::endl;
+    std::cout << "Creating DataChannel" << std::endl;
     pc->createDataChannel();
 
     teleoperation->addPeerConnection(id, pc);

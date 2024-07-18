@@ -8,7 +8,7 @@ window.addEventListener('load', () => {
 
     const localId = randomId(4);
 
-    const url = `ws://10.10.108.50:8000/${localId}`;
+    const url = `ws://10.10.110.114:8000/${localId}`;
 
     const peerConnectionMap = {};
     const dataChannelMap = {};
@@ -155,7 +155,7 @@ window.addEventListener('load', () => {
             .then(() => {
                 const {sdp, type} = pc.localDescription;
                 ws.send(JSON.stringify({
-                    id, type, description: sdp,
+                    id, type, auth: "auth0", description: sdp,
                 }));
             });
     }
@@ -163,7 +163,7 @@ window.addEventListener('load', () => {
     function sendLocalCandidate(ws, id, cand) {
         const {candidate, sdpMid} = cand;
         ws.send(JSON.stringify({
-            id, type: 'candidate', candidate, mid: sdpMid,
+            id, type: 'candidate', auth: "auth0", candidate, mid: sdpMid,
         }));
     }
 

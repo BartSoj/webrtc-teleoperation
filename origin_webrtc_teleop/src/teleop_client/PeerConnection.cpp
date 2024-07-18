@@ -9,11 +9,11 @@ template<class T>
 weak_ptr<T> make_weak_ptr(shared_ptr<T> ptr) { return ptr; }
 
 
-PeerConnection::PeerConnection(const rtc::Configuration &config,
-                               weak_ptr<rtc::WebSocket> wws, std::string localId, std::string remoteId) {
-    auto pc = std::make_shared<rtc::PeerConnection>(config);
-    this->localId = localId;
-    this->remoteId = remoteId;
+PeerConnection::PeerConnection(const Configuration &config) : localId(config.localId), remoteId(config.remoteId),
+                                                              channelCallbacks(config.channelCallbacks) {
+    auto pc = std::make_shared<rtc::PeerConnection>(config.rtcConfig);
+
+    setDefaultCallbacks();
 
     rtc::Description::Video media("video", rtc::Description::Direction::SendOnly);
     media.addH264Codec(96); // Must match the payload type of the external h264 RTP stream
@@ -28,27 +28,27 @@ PeerConnection::PeerConnection(const rtc::Configuration &config,
         std::cout << "Gathering State: " << state << std::endl;
     });
 
-    pc->onLocalDescription([wws, remoteId](rtc::Description description) {
-        json message = {{"id",          remoteId},
+    pc->onLocalDescription([config](rtc::Description description) {
+        json message = {{"id",          config.remoteId},
                         {"type",        description.typeString()},
                         {"description", std::string(description)}};
 
-        if (auto ws = wws.lock())
+        if (auto ws = config.wws.lock())
             ws->send(message.dump());
     });
 
-    pc->onLocalCandidate([wws, remoteId](rtc::Candidate candidate) {
-        json message = {{"id",        remoteId},
+    pc->onLocalCandidate([config](rtc::Candidate candidate) {
+        json message = {{"id",        config.remoteId},
                         {"type",      "candidate"},
                         {"candidate", std::string(candidate)},
                         {"mid",       candidate.mid()}};
 
-        if (auto ws = wws.lock())
+        if (auto ws = config.wws.lock())
             ws->send(message.dump());
     });
 
-    pc->onDataChannel([this, remoteId](shared_ptr<rtc::DataChannel> dc) {
-        std::cout << "DataChannel from " << remoteId << " received with label \"" << dc->label() << "\""
+    pc->onDataChannel([this](shared_ptr<rtc::DataChannel> dc) {
+        std::cout << "DataChannel from " << this->remoteId << " received with label \"" << dc->label() << "\""
                   << std::endl;
         this->dataChannel = dc;
         configureDataChannel();
@@ -57,23 +57,35 @@ PeerConnection::PeerConnection(const rtc::Configuration &config,
     this->rtcPeerConnection = pc;
 }
 
+void PeerConnection::setDefaultCallbacks() {
+    if (!channelCallbacks.onChannelOpenCallback) {
+        channelCallbacks.onChannelOpenCallback = [this]() {
+            auto wdc = make_weak_ptr(dataChannel);
+            if (auto dc = wdc.lock())
+                dc->send("Hello from " + localId);
+        };
+    }
+
+    if (!channelCallbacks.onChannelClosedCallback) {
+        channelCallbacks.onChannelClosedCallback = [this]() {
+            std::cout << "DataChannel from " << remoteId << " closed" << std::endl;
+        };
+    }
+
+    if (!channelCallbacks.onChannelMessageCallback) {
+        channelCallbacks.onChannelMessageCallback = [this](auto data) {
+            std::cout << "Message from " << remoteId << " received: " << data << std::endl;
+        };
+    }
+}
+
 void PeerConnection::configureDataChannel() {
-    dataChannel->onOpen([this]() {
-        auto wdc = make_weak_ptr(dataChannel);
-        if (auto dc = wdc.lock())
-            dc->send("Hello from " + localId);
-    });
-
-    dataChannel->onClosed([this]() { std::cout << "DataChannel from " << remoteId << " closed" << std::endl; });
-
+    dataChannel->onOpen(channelCallbacks.onChannelOpenCallback);
+    dataChannel->onClosed(channelCallbacks.onChannelClosedCallback);
     dataChannel->onMessage([this](auto data) {
-        // data holds either std::string or rtc::binary
-        if (std::holds_alternative<std::string>(data))
-            std::cout << "Message from " << remoteId << " received: " << std::get<std::string>(data)
-                      << std::endl;
-        else
-            std::cout << "Binary message from " << remoteId
-                      << " received, size=" << std::get<rtc::binary>(data).size() << std::endl;
+        if (std::holds_alternative<std::string>(data)) {
+            channelCallbacks.onChannelMessageCallback(std::get<std::string>(data));
+        }
     });
 }
 

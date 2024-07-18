@@ -17,8 +17,20 @@ using nlohmann::json;
 
 class PeerConnection {
 public:
-    PeerConnection(const rtc::Configuration &config,
-                   weak_ptr<rtc::WebSocket> wws, std::string localId, std::string remoteId);
+    struct ChannelCallbacks {
+        std::function<void()> onChannelOpenCallback;
+        std::function<void()> onChannelClosedCallback;
+        std::function<void(std::string data)> onChannelMessageCallback;
+    };
+
+    struct Configuration {
+        rtc::Configuration rtcConfig;
+        weak_ptr<rtc::WebSocket> wws;
+        std::string localId;
+        std::string remoteId;
+        ChannelCallbacks channelCallbacks;
+    };
+    PeerConnection(const Configuration &config);
 
     void sendMessage(const std::string &message);
 
@@ -31,11 +43,13 @@ public:
     void close();
 
 private:
+    void setDefaultCallbacks();
     void configureDataChannel();
 
     const rtc::SSRC SSRC = 42;
     std::string localId;
     std::string remoteId;
+    ChannelCallbacks channelCallbacks;
     shared_ptr<rtc::PeerConnection> rtcPeerConnection;
     shared_ptr<rtc::DataChannel> dataChannel;
     shared_ptr<rtc::Track> track;

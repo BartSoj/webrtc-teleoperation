@@ -11,7 +11,7 @@ weak_ptr<T> make_weak_ptr(shared_ptr<T> ptr) { return ptr; }
 Teleoperation::Teleoperation(const std::string &localId) {
     this->localId = localId;
 
-    wsUrl = "ws://10.10.108.50:8000/" + localId;
+    wsUrl = "ws://10.10.110.114:8000/" + localId;
 
     rtc::InitLogger(rtc::LogLevel::Info);
 
@@ -49,6 +49,16 @@ Teleoperation::Teleoperation(const std::string &localId) {
 
         auto id = it->get<std::string>();
 
+        it = message.find("auth");
+        if (it == message.end() || it->get<std::string>() != "auth0")
+            return;
+
+        it = message.find("access");
+        if (it == message.end())
+            return;
+
+        auto access = it->get<std::string>();
+
         it = message.find("type");
         if (it == message.end())
             return;
@@ -60,7 +70,18 @@ Teleoperation::Teleoperation(const std::string &localId) {
             pc = jt->second;
         } else if (type == "offer") {
             std::cout << "Answering to " + id << std::endl;
-            pc = std::make_shared<PeerConnection>(config, wws, this->localId, id);
+            PeerConnection::Configuration pcConfig;
+            pcConfig.rtcConfig = config;
+            pcConfig.wws = make_weak_ptr(ws);
+            pcConfig.localId = this->localId;
+            pcConfig.remoteId = id;
+            pcConfig.channelCallbacks.onChannelOpenCallback = onChannelOpenCallback;
+            pcConfig.channelCallbacks.onChannelClosedCallback = onChannelClosedCallback;
+            if (access == "control")
+                pcConfig.channelCallbacks.onChannelMessageCallback = onChannelControlMessageCallback;
+            else
+                pcConfig.channelCallbacks.onChannelMessageCallback = onChannelMessageCallback;
+            pc = std::make_shared<PeerConnection>(pcConfig);
         } else {
             return;
         }
@@ -76,6 +97,22 @@ void Teleoperation::startSignaling() {
     ws->open(wsUrl);
     std::cout << "Waiting for signaling to be connected..." << std::endl;
     wsFuture.get();
+}
+
+void Teleoperation::onChannelOpen(std::function<void()> callback) {
+    onChannelOpenCallback = std::move(callback);
+}
+
+void Teleoperation::onChannelClosed(std::function<void()> callback) {
+    onChannelClosedCallback = callback;
+}
+
+void Teleoperation::onChannelMessage(std::function<void(std::string data)> callback) {
+    onChannelMessageCallback = callback;
+}
+
+void Teleoperation::onChannelControlMessage(std::function<void(std::string)> callback) {
+    onChannelControlMessageCallback = callback;
 }
 
 void Teleoperation::sendMessage(const std::string &remoteId, const std::string &message) {
