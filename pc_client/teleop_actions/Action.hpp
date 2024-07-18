@@ -3,8 +3,8 @@
 
 #include "../../origin_webrtc_teleop/src/teleop_client/Teleoperation.hpp"
 
-
-class Action {
+class Action
+{
 public:
     Action(shared_ptr<Teleoperation> teleoperation);
 
@@ -18,5 +18,4 @@ protected:
     shared_ptr<Teleoperation> teleoperation;
 };
 
-
-#endif //LIBDATACHANNEL_APP_ACTION_H
+#endif  // LIBDATACHANNEL_APP_ACTION_H

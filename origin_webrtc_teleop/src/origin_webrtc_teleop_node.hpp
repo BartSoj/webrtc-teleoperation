@@ -1,9 +1,10 @@
+#include "nav_msgs/msg/odometry.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "sensor_msgs/msg/image.hpp"
-#include "nav_msgs/msg/odometry.hpp"
 #include "teleop_client/Teleoperation.hpp"
 
-class OriginWebrtcTeleopNode : public rclcpp::Node {
+class OriginWebrtcTeleopNode : public rclcpp::Node
+{
 public:
     OriginWebrtcTeleopNode();
     ~OriginWebrtcTeleopNode();

@@ -1,24 +1,23 @@
 #ifndef LIBDATACHANNEL_APP_TELEOPERATION_HPP
 #define LIBDATACHANNEL_APP_TELEOPERATION_HPP
 
-#include "PeerConnection.hpp"
-
-#include "rtc/rtc.hpp"
-
-#include "nlohmann/json.hpp"
-
 #include <future>
 #include <iostream>
 #include <memory>
 #include <stdexcept>
-#include <utility>
 #include <unordered_map>
+#include <utility>
 
+#include "PeerConnection.hpp"
+#include "nlohmann/json.hpp"
+#include "rtc/rtc.hpp"
+
+using std::future;
 using std::shared_ptr;
 using std::weak_ptr;
-using std::future;
 
-class Teleoperation {
+class Teleoperation
+{
 public:
     Teleoperation(const std::string &localId);
 
@@ -44,13 +43,15 @@ public:
 
     std::shared_ptr<rtc::WebSocket> getWebSocket() const { return ws; }
 
-    const std::unordered_map<std::string, std::shared_ptr<PeerConnection>> &
-    getPeerConnectionMap() const { return peerConnectionMap; }
-
-    void addPeerConnection(const std::string &id, std::shared_ptr<PeerConnection> pc) {
-        peerConnectionMap.emplace(id, std::move(pc));
+    const std::unordered_map<std::string, std::shared_ptr<PeerConnection>> &getPeerConnectionMap() const
+    {
+        return peerConnectionMap;
     }
 
+    void addPeerConnection(const std::string &id, std::shared_ptr<PeerConnection> pc)
+    {
+        peerConnectionMap.emplace(id, std::move(pc));
+    }
 
 private:
     rtc::Configuration config;
@@ -66,5 +67,4 @@ private:
     std::unordered_map<std::string, shared_ptr<PeerConnection>> peerConnectionMap;
 };
 
-
-#endif //LIBDATACHANNEL_APP_TELEOPERATION_HPP
+#endif  // LIBDATACHANNEL_APP_TELEOPERATION_HPP

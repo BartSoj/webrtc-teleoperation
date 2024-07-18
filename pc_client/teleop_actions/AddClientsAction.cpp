@@ -3,16 +3,17 @@
 #include <iostream>
 #include <memory>
 
-bool AddClientsAction::loop() {
+bool AddClientsAction::loop()
+{
     std::string id;
     std::cout << "Enter a remote ID to send an offer:" << std::endl;
     std::cin >> id;
     std::cin.ignore();
 
-    if (id.empty())
-        return false;
+    if(id.empty()) return false;
 
-    if (id == teleoperation->getLocalId()) {
+    if(id == teleoperation->getLocalId())
+    {
         std::cout << "Invalid remote ID (This is the local ID)" << std::endl;
         return true;
     }

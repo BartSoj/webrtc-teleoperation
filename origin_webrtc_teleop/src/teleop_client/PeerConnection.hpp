@@ -1,29 +1,30 @@
 #ifndef LIBDATACHANNEL_APP_PEERCONNECTION_H
 #define LIBDATACHANNEL_APP_PEERCONNECTION_H
 
-#include "rtc/rtc.hpp"
-
-#include "nlohmann/json.hpp"
-
 #include <cstddef>
 #include <iostream>
 #include <memory>
 
+#include "nlohmann/json.hpp"
+#include "rtc/rtc.hpp"
+
 using namespace std::chrono_literals;
+using nlohmann::json;
 using std::shared_ptr;
 using std::weak_ptr;
-using nlohmann::json;
 
-
-class PeerConnection {
+class PeerConnection
+{
 public:
-    struct ChannelCallbacks {
+    struct ChannelCallbacks
+    {
         std::function<void()> onChannelOpenCallback;
         std::function<void()> onChannelClosedCallback;
         std::function<void(std::string data)> onChannelMessageCallback;
     };
 
-    struct Configuration {
+    struct Configuration
+    {
         rtc::Configuration rtcConfig;
         weak_ptr<rtc::WebSocket> wws;
         std::string localId;
@@ -55,5 +56,4 @@ private:
     shared_ptr<rtc::Track> track;
 };
 
-
-#endif //LIBDATACHANNEL_APP_PEERCONNECTION_H
+#endif  // LIBDATACHANNEL_APP_PEERCONNECTION_H

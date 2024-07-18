@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Robot control</title>
-    <link rel="stylesheet" href="style.css">
+    <link href="style.css" rel="stylesheet">
     <script src="script.js"></script>
 </head>
 <body>
@@ -11,12 +11,12 @@
 <h2>Local ID</h2>
 <p id="localId"></p>
 <h2>Send an offer through signaling</h2>
-<input type="text" id="offerId" placeholder="remote ID" disabled>
-<input type="button" id="offerBtn" value="Offer" disabled>
+<input disabled id="offerId" placeholder="remote ID" type="text">
+<input disabled id="offerBtn" type="button" value="Offer">
 <br>
 <h2>Send a message through DataChannel</h2>
-<input type="text" id="sendMsg" placeholder="message" disabled>
-<input type="button" id="sendBtn" value="Send" disabled>
+<input disabled id="sendMsg" placeholder="message" type="text">
+<input disabled id="sendBtn" type="button" value="Send">
 <br>
 <video id="video-element" muted></video>
 <h2>Odometry Data</h2>

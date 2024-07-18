@@ -1,0 +1,10 @@
+Language: Cpp
+BasedOnStyle: Google
+Standard: c++20
+IndentWidth: 4
+BreakBeforeBraces: Allman
+SpaceBeforeParens: Never
+PointerAlignment: Right
+AccessModifierOffset: -4
+ColumnLimit: 120 # !!!
+RequiresExpressionIndentation: Keyword # Keep same behavior as clang-format 15

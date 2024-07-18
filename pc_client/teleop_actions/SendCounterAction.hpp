@@ -3,7 +3,8 @@
 
 #include "Action.hpp"
 
-class SendCounterAction : public Action {
+class SendCounterAction : public Action
+{
 public:
     using Action::Action;
 
@@ -14,8 +15,6 @@ protected:
 
 private:
     int counter;
-
 };
 
-
-#endif //LIBDATACHANNEL_APP_SENDCOUNTERACTION_H
+#endif  // LIBDATACHANNEL_APP_SENDCOUNTERACTION_H

@@ -14,7 +14,6 @@ import asyncio
 import logging
 import websockets
 
-
 logger = logging.getLogger('websockets')
 logger.setLevel(logging.INFO)
 logger.addHandler(logging.StreamHandler(sys.stdout))

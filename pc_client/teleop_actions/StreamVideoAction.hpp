@@ -5,7 +5,8 @@
 
 typedef int SOCKET;
 
-class StreamVideoAction : public Action {
+class StreamVideoAction : public Action
+{
 public:
     using Action::Action;
 
@@ -19,8 +20,6 @@ protected:
     SOCKET sock;
     char buffer[BUFFER_SIZE];
     long int len;
-
 };
 
-
-#endif //LIBDATACHANNEL_APP_STREAMVIDEOACTION_H
+#endif  // LIBDATACHANNEL_APP_STREAMVIDEOACTION_H
