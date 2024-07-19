@@ -58,7 +58,7 @@ async def main():
     endpoint_or_port = sys.argv[1] if len(sys.argv) > 1 else "8000"
     ssl_cert = sys.argv[2] if len(sys.argv) > 2 else None
 
-    endpoint = endpoint_or_port if ':' in endpoint_or_port else "127.0.0.1:" + endpoint_or_port
+    endpoint = endpoint_or_port if ':' in endpoint_or_port else "0.0.0.0:" + endpoint_or_port
 
     if ssl_cert:
         ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)

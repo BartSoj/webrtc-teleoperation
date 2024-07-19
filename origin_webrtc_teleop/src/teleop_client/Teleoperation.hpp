@@ -19,7 +19,7 @@ using std::weak_ptr;
 class Teleoperation
 {
 public:
-    Teleoperation(const std::string &localId);
+    Teleoperation(const std::string &localId, const std::string &hostname = "127.0.0.1");
 
     void startSignaling();
 

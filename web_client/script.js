@@ -8,12 +8,15 @@ window.addEventListener('load', () => {
 
     const localId = randomId(4);
 
-    const url = `ws://10.10.110.114:8000/${localId}`;
+    const hostname = location.hostname
+    const wsUrl = `ws://${hostname}:8000/${localId}`;
 
     const peerConnectionMap = {};
     const dataChannelMap = {};
 
+    const auth = document.getElementById('auth');
     const offerId = document.getElementById('offerId');
+    const access = document.getElementById('access');
     const offerBtn = document.getElementById('offerBtn');
     const sendMsg = document.getElementById('sendMsg');
     const sendBtn = document.getElementById('sendBtn');
@@ -27,10 +30,12 @@ window.addEventListener('load', () => {
     const angularVelocityElement = document.getElementById('angular-velocity');
 
     console.log('Connecting to signaling...');
-    openSignaling(url)
+    openSignaling(wsUrl)
         .then((ws) => {
             console.log('WebSocket connected, signaling ready');
+            auth.disabled = false;
             offerId.disabled = false;
+            access.disabled = false;
             offerBtn.disabled = false;
             offerBtn.onclick = () => offerPeerConnection(ws, offerId.value);
         })
@@ -155,7 +160,7 @@ window.addEventListener('load', () => {
             .then(() => {
                 const {sdp, type} = pc.localDescription;
                 ws.send(JSON.stringify({
-                    id, type, auth: "auth0", description: sdp,
+                    id, type, auth: auth.value, access: access.value, description: sdp,
                 }));
             });
     }
@@ -163,7 +168,7 @@ window.addEventListener('load', () => {
     function sendLocalCandidate(ws, id, cand) {
         const {candidate, sdpMid} = cand;
         ws.send(JSON.stringify({
-            id, type: 'candidate', auth: "auth0", candidate, mid: sdpMid,
+            id, type: 'candidate', auth: auth.value, access: access.value, candidate, mid: sdpMid,
         }));
     }
 

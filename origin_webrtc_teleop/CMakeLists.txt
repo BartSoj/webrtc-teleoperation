@@ -13,9 +13,11 @@ find_package(nlohmann_json REQUIRED)
 find_package(LibDataChannel REQUIRED)
 find_package(Threads REQUIRED)
 
-file(GLOB_RECURSE PROJECT_SOURCES RELATIVE ${CMAKE_SOURCE_DIR} "src/*.cpp")
-
-add_executable(${PROJECT_NAME} ${PROJECT_SOURCES})
+add_executable(${PROJECT_NAME}
+        src/origin_webrtc_teleop_node_main.cpp
+        src/origin_webrtc_teleop_node.cpp
+        src/teleop_client/PeerConnection.cpp
+        src/teleop_client/Teleoperation.cpp)
 
 ament_target_dependencies(${PROJECT_NAME} rclcpp sensor_msgs nav_msgs)
 

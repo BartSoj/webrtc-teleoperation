@@ -11,7 +11,12 @@
 <h2>Local ID</h2>
 <p id="localId"></p>
 <h2>Send an offer through signaling</h2>
+<input disabled id="auth" placeholder="auth" type="text">
 <input disabled id="offerId" placeholder="remote ID" type="text">
+<select disabled id="access">
+    <option value="observe" selected>Observe</option>
+    <option value="control">Control</option>
+</select>
 <input disabled id="offerBtn" type="button" value="Offer">
 <br>
 <h2>Send a message through DataChannel</h2>
