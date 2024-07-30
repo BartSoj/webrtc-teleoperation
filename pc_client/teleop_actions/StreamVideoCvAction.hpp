@@ -9,6 +9,7 @@ extern "C"
 #include <libswscale/swscale.h>
 }
 
+#include <fstream>
 #include <opencv2/opencv.hpp>
 
 #include "Action.hpp"
@@ -22,6 +23,8 @@ protected:
     void init() override;
 
     bool loop() override;
+
+    void cleanup() override;
 
     cv::VideoCapture cap;
     int frameIndex;

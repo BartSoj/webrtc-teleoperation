@@ -16,27 +16,38 @@ void StreamVideoCvAction::init()
     if(!cap.isOpened())
     {
         std::cerr << "Error: Could not open camera" << std::endl;
+        return;
     }
 
+    cap.set(cv::CAP_PROP_FPS, 30);
     cap.set(cv::CAP_PROP_FRAME_WIDTH, 640);
     cap.set(cv::CAP_PROP_FRAME_HEIGHT, 480);
+    cap.set(cv::CAP_PROP_BUFFERSIZE, 1);
 
     // Initialize FFmpeg encoder
     const AVCodec* codec = avcodec_find_encoder(AV_CODEC_ID_H264);
     codecContext = avcodec_alloc_context3(codec);
-    codecContext->bit_rate = 400000;
+    codecContext->bit_rate = 1000000;
     codecContext->width = 640;
     codecContext->height = 480;
     codecContext->time_base = (AVRational){1, 30};
     codecContext->gop_size = 10;
-    codecContext->max_b_frames = 0;
     codecContext->pix_fmt = AV_PIX_FMT_YUV420P;
+    codecContext->flags |= AV_CODEC_FLAG_LOW_DELAY;
+    codecContext->max_b_frames = 0;
+    codecContext->refs = 1;
 
-    if(avcodec_open2(codecContext, codec, nullptr) < 0)
+    AVDictionary* opts = nullptr;
+    av_dict_set(&opts, "preset", "ultrafast", 0);
+    av_dict_set(&opts, "tune", "zerolatency", 0);
+
+    if(avcodec_open2(codecContext, codec, &opts) < 0)
     {
         std::cerr << "Error: Could not open codec" << std::endl;
+        return;
     }
 
+    av_dict_free(&opts);
     avFrame = av_frame_alloc();
     avFrame->format = codecContext->pix_fmt;
     avFrame->width = codecContext->width;
@@ -62,14 +73,13 @@ bool StreamVideoCvAction::loop()
     if(frame.empty())
     {
         std::cerr << "Error: Could not capture frame" << std::endl;
-        cap.release();
         return false;
     }
 
     // Convert frame to YUV420P
     SwsContext* swsCtx =
         sws_getContext(frame.cols, frame.rows, AV_PIX_FMT_BGR24, codecContext->width, codecContext->height,
-                       AV_PIX_FMT_YUV420P, SWS_BICUBIC, nullptr, nullptr, nullptr);
+                       AV_PIX_FMT_YUV420P, SWS_FAST_BILINEAR, nullptr, nullptr, nullptr);
     uint8_t* data[AV_NUM_DATA_POINTERS] = {frame.data, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr};
     int linesize[AV_NUM_DATA_POINTERS] = {static_cast<int>(frame.step), 0, 0, 0, 0, 0, 0, 0};
     sws_scale(swsCtx, data, linesize, 0, frame.rows, avFrame->data, avFrame->linesize);
@@ -78,33 +88,47 @@ bool StreamVideoCvAction::loop()
     // Encode frame
     avFrame->pts = frameIndex++;
 
-    if(avcodec_send_frame(codecContext, avFrame) < 0)
+    int ret = avcodec_send_frame(codecContext, avFrame);
+    if(ret < 0)
     {
-        std::cerr << "Error: Could not send frame for encoding" << std::endl;
+        std::cerr << "Error sending frame for encoding" << std::endl;
         return false;
     }
 
-    while(avcodec_receive_packet(codecContext, avPacket) == 0)
+    while(true)
     {
-        avPacket->duration = av_rescale_q(1, codecContext->time_base, (AVRational){1, 30});
+        ret = avcodec_receive_packet(codecContext, avPacket);
+        if(ret == AVERROR(EAGAIN) || ret == AVERROR_EOF)
+        {
+            break;
+        }
+        else if(ret < 0)
+        {
+            std::cerr << "Error receiving encoded packet" << std::endl;
+            return false;
+        }
 
-        std::cout << "Packet info: PTS: " << avPacket->pts << ", DTS: " << avPacket->dts
-                  << ", Duration: " << avPacket->duration << ", Stream index: " << avPacket->stream_index << std::endl;
-
-        // Send encoded data via WebRTC
+        // Send encoded data via WebRTC immediately
         const std::byte* data = reinterpret_cast<const std::byte*>(avPacket->data);
         size_t len = avPacket->size;
+        uint64_t timestamp = avPacket->pts * (1000000 / codecContext->time_base.den);
 
         for(const auto& [id, peerConnection] : teleoperation->getPeerConnectionMap())
         {
-            peerConnection->sendVideo(data, len);
-            std::cout << "Sent video to " << id << std::endl;
+            peerConnection->sendVideo(data, len, timestamp);
         }
 
         av_packet_unref(avPacket);
     }
 
-    std::this_thread::sleep_for(std::chrono::milliseconds(33));
-
     return true;
+}
+
+void StreamVideoCvAction::cleanup()
+{
+    cap.release();
+
+    av_packet_free(&avPacket);
+    av_frame_free(&avFrame);
+    avcodec_free_context(&codecContext);
 }

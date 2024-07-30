@@ -15,6 +15,8 @@ protected:
 
     virtual bool loop() = 0;
 
+    virtual void cleanup() {}
+
     shared_ptr<Teleoperation> teleoperation;
 };
 

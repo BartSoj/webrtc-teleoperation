@@ -32,7 +32,7 @@ bool StreamVideoAction::loop()
 
         for(const auto &[id, pc] : teleoperation->getPeerConnectionMap())
         {
-            pc->sendVideo(reinterpret_cast<const std::byte *>(buffer), len);
+            pc->sendVideo(reinterpret_cast<const std::byte *>(buffer), len, 0);
         }
         return true;
     }

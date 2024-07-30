@@ -2,6 +2,7 @@
 
 using namespace std::chrono_literals;
 using nlohmann::json;
+using std::make_shared;
 using std::shared_ptr;
 using std::weak_ptr;
 
@@ -22,6 +23,23 @@ PeerConnection::PeerConnection(const Configuration &config)
     media.addH264Codec(96);  // Must match the payload type of the external h264 RTP stream
     media.addSSRC(this->SSRC, "video-send");
     auto track = pc->addTrack(media);
+
+    // create RTP configuration
+    auto rtpConfig =
+        make_shared<rtc::RtpPacketizationConfig>(this->SSRC, "video", 96, rtc::H264RtpPacketizer::defaultClockRate);
+    rtpConfig->startTimestamp = 0;
+    // create packetizer
+    auto packetizer = make_shared<rtc::H264RtpPacketizer>(rtc::H264RtpPacketizer::Separator::StartSequence, rtpConfig);
+    // add RTCP SR handler
+    auto srReporter = make_shared<rtc::RtcpSrReporter>(rtpConfig);
+    packetizer->addToChain(srReporter);
+    // add RTCP NACK handler
+    auto nackResponder = make_shared<rtc::RtcpNackResponder>();
+    packetizer->addToChain(nackResponder);
+    // set handler
+    track->setMediaHandler(packetizer);
+
+    this->srReporter = srReporter;
     this->track = track;
 
     pc->onStateChange([](rtc::PeerConnection::State state) { std::cout << "State: " << state << std::endl; });
@@ -104,9 +122,23 @@ void PeerConnection::sendMessage(const std::string &message)
     if(dataChannel && dataChannel->isOpen()) this->dataChannel->send(message);
 }
 
-void PeerConnection::sendVideo(const std::byte *data, size_t len)
+void PeerConnection::sendVideo(const std::byte *data, size_t len, uint64_t timestamp)
 {
-    if(track != nullptr && track->isOpen()) track->send(data, len);
+    if(track != nullptr && track->isOpen())
+    {
+        auto elapsedSeconds = double(timestamp) / (1000 * 1000);
+        uint32_t elapsedTimestamp = srReporter->rtpConfig->secondsToTimestamp(elapsedSeconds);
+        srReporter->rtpConfig->timestamp += srReporter->rtpConfig->startTimestamp + elapsedTimestamp;
+
+        try
+        {
+            track->send(data, len);
+        }
+        catch(const std::exception &e)
+        {
+            std::cerr << "Unable to send video packet: " << e.what() << std::endl;
+        }
+    }
 }
 
 void PeerConnection::createDataChannel()

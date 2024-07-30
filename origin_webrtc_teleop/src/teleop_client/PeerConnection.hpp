@@ -35,7 +35,7 @@ public:
 
     void sendMessage(const std::string &message);
 
-    void sendVideo(const std::byte *data, size_t len);
+    void sendVideo(const std::byte *data, size_t len, uint64_t timestamp);
 
     void createDataChannel();
 
@@ -54,6 +54,7 @@ private:
     shared_ptr<rtc::PeerConnection> rtcPeerConnection;
     shared_ptr<rtc::DataChannel> dataChannel;
     shared_ptr<rtc::Track> track;
+    shared_ptr<rtc::RtcpSrReporter> srReporter;
 };
 
 #endif  // LIBDATACHANNEL_APP_PEERCONNECTION_H
