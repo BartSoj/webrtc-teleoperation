@@ -12,7 +12,7 @@ extern "C"
 
 void StreamVideoCvAction::init()
 {
-    cap.open(1);
+    cap.open(0);
     if(!cap.isOpened())
     {
         std::cerr << "Error: Could not open camera" << std::endl;
@@ -26,7 +26,18 @@ void StreamVideoCvAction::init()
 
     // Initialize FFmpeg encoder
     const AVCodec* codec = avcodec_find_encoder(AV_CODEC_ID_H264);
+    if(!codec)
+    {
+        std::cerr << "Error: Could not find encoder" << std::endl;
+        return;
+    }
+
     codecContext = avcodec_alloc_context3(codec);
+    if(!codecContext)
+    {
+        std::cerr << "Error: Could not allocate codec context" << std::endl;
+        return;
+    }
     codecContext->bit_rate = 1000000;
     codecContext->width = 640;
     codecContext->height = 480;
@@ -49,6 +60,11 @@ void StreamVideoCvAction::init()
 
     av_dict_free(&opts);
     avFrame = av_frame_alloc();
+    if(!avFrame)
+    {
+        std::cerr << "Error: Could not allocate frame" << std::endl;
+        return;
+    }
     avFrame->format = codecContext->pix_fmt;
     avFrame->width = codecContext->width;
     avFrame->height = codecContext->height;
@@ -80,6 +96,12 @@ bool StreamVideoCvAction::loop()
     SwsContext* swsCtx =
         sws_getContext(frame.cols, frame.rows, AV_PIX_FMT_BGR24, codecContext->width, codecContext->height,
                        AV_PIX_FMT_YUV420P, SWS_FAST_BILINEAR, nullptr, nullptr, nullptr);
+    if(!swsCtx)
+    {
+        std::cerr << "Error: Could not create SwsContext" << std::endl;
+        return false;
+    }
+
     uint8_t* data[AV_NUM_DATA_POINTERS] = {frame.data, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr};
     int linesize[AV_NUM_DATA_POINTERS] = {static_cast<int>(frame.step), 0, 0, 0, 0, 0, 0, 0};
     sws_scale(swsCtx, data, linesize, 0, frame.rows, avFrame->data, avFrame->linesize);
