@@ -1,17 +1,25 @@
 #include "SendCounterAction.hpp"
 
 #include <iostream>
+#include <nlohmann/json.hpp>
 #include <thread>
 
 using namespace std::chrono_literals;
+using json = nlohmann::json;
 
 void SendCounterAction::init() { counter = 0; }
 
 bool SendCounterAction::loop()
 {
-    std::string message = "Counter: " + std::to_string(counter);
-    std::cout << "Sending message " << counter << std::endl;
-    teleoperation->broadcastMessage(message);
+    json logMessage;
+    logMessage["type"] = "log";
+    logMessage["message"] = "Counter: " + std::to_string(counter);
+
+    std::string jsonString = logMessage.dump();
+
+    std::cout << "Sending message: " << jsonString << std::endl;
+    teleoperation->broadcastMessage(jsonString);
+
     std::this_thread::sleep_for(1s);
     counter++;
 

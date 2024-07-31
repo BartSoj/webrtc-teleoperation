@@ -28,6 +28,8 @@ window.addEventListener('load', () => {
     const orientationElement = document.getElementById('orientation');
     const linearVelocityElement = document.getElementById('linear-velocity');
     const angularVelocityElement = document.getElementById('angular-velocity');
+    const logMessagesElement = document.getElementById('log-messages');
+
 
     console.log('Connecting to signaling...');
     openSignaling(wsUrl)
@@ -146,8 +148,13 @@ window.addEventListener('load', () => {
         };
         dc.onmessage = (e) => {
             if (typeof (e.data) != 'string') return;
-            console.log(`Message from ${id} received: ${e.data}`);
-            updateOdometryData(e.data);
+            const data = JSON.parse(e.data);
+            console.log(`Message from ${id} received:`, data);
+            if (data.type === 'odometry') {
+                updateOdometryData(data);
+            } else if (data.type === 'log') {
+                printLogData(data);
+            }
         };
 
         dataChannelMap[id] = dc;
@@ -181,11 +188,22 @@ window.addEventListener('load', () => {
 
     // Update odometry data on the webpage
     function updateOdometryData(data) {
-        const odometry = JSON.parse(data);
-        positionElement.textContent = `x: ${odometry.position.x}, y: ${odometry.position.y}, z: ${odometry.position.z}`;
-        orientationElement.textContent = `x: ${odometry.orientation.x}, y: ${odometry.orientation.y}, z: ${odometry.orientation.z}, w: ${odometry.orientation.w}`;
-        linearVelocityElement.textContent = `x: ${odometry.linear.x}, y: ${odometry.linear.y}, z: ${odometry.linear.z}`;
-        angularVelocityElement.textContent = `x: ${odometry.angular.x}, y: ${odometry.angular.y}, z: ${odometry.angular.z}`;
+        const odometry = data.odometry;
+        positionElement.textContent = `x: ${odometry.position.x.toFixed(2)}, y: ${odometry.position.y.toFixed(2)}, z: ${odometry.position.z.toFixed(2)}`;
+        orientationElement.textContent = `x: ${odometry.orientation.x.toFixed(2)}, y: ${odometry.orientation.y.toFixed(2)}, z: ${odometry.orientation.z.toFixed(2)}, w: ${odometry.orientation.w.toFixed(2)}`;
+        linearVelocityElement.textContent = `x: ${odometry.linear.x.toFixed(2)}, y: ${odometry.linear.y.toFixed(2)}, z: ${odometry.linear.z.toFixed(2)}`;
+        angularVelocityElement.textContent = `x: ${odometry.angular.x.toFixed(2)}, y: ${odometry.angular.y.toFixed(2)}, z: ${odometry.angular.z.toFixed(2)}`;
+    }
+
+    function printLogData(data) {
+        const logMessage = document.createElement('p');
+        logMessage.textContent = data.message;
+        logMessagesElement.appendChild(logMessage);
+
+        // Limit the number of log messages to display (e.g., last 10)
+        while (logMessagesElement.children.length > 10) {
+            logMessagesElement.removeChild(logMessagesElement.firstChild);
+        }
     }
 
 });

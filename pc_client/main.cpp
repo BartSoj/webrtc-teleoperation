@@ -7,6 +7,7 @@
 #include "teleop_actions/AddClientsAction.hpp"
 #include "teleop_actions/SendCounterAction.hpp"
 #include "teleop_actions/StreamVideoAction.hpp"
+#include "teleop_actions/StreamVideoCvAction.hpp"
 
 int main(int argc, char **argv)
 try
@@ -14,7 +15,7 @@ try
     auto teleoperation = std::make_shared<Teleoperation>("origin-1");
     teleoperation->startSignaling();
 
-    Action *streamVideoAction = new StreamVideoAction(teleoperation);
+    Action *streamVideoAction = new StreamVideoCvAction(teleoperation);
     Action *sendCounterAction = new SendCounterAction(teleoperation);
     Action *addClientsAction = new AddClientsAction(teleoperation);
 

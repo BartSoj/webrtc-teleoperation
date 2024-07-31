@@ -86,7 +86,9 @@ void PeerConnection::setDefaultCallbacks()
         channelCallbacks.onChannelOpenCallback = [this]()
         {
             auto wdc = make_weak_ptr(dataChannel);
-            if(auto dc = wdc.lock()) dc->send("Hello from " + localId);
+
+            json helloMessage = {{"type", "log"}, {"message", "Hello from " + localId}};
+            if(auto dc = wdc.lock()) dc->send(helloMessage.dump());
         };
     }
 
