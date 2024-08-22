@@ -12,5 +12,5 @@ void Action::execute()
     {
         proceed = loop();
     }
-    cleanup();
+    close();
 }

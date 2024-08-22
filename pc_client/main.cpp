@@ -1,6 +1,5 @@
 #include <iostream>
 #include <stdexcept>
-#include <thread>
 
 #include "../origin_webrtc_teleop/src/teleop_client/Teleoperation.hpp"
 #include "teleop_actions/Action.hpp"
@@ -26,8 +25,6 @@ try
     streamVideoThread.join();
     sendCounterThread.join();
     addClientsThread.join();
-
-    teleoperation->close();
 
     return 0;
 }

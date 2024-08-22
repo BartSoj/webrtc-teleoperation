@@ -21,6 +21,7 @@ add_executable(libdatachannel_app
         main.cpp
         ../origin_webrtc_teleop/src/teleop_client/Teleoperation.cpp
         ../origin_webrtc_teleop/src/teleop_client/PeerConnection.cpp
+        ../origin_webrtc_teleop/src/teleop_client/VideoEncoder.cpp
         teleop_actions/Action.cpp
         teleop_actions/SendCounterAction.cpp
         teleop_actions/AddClientsAction.cpp
