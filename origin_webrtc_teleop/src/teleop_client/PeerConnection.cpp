@@ -21,12 +21,12 @@ PeerConnection::PeerConnection(const Configuration &config)
 
     rtc::Description::Video media("video", rtc::Description::Direction::SendOnly);
     media.addH264Codec(96);  // Must match the payload type of the external h264 RTP stream
-    media.addSSRC(this->SSRC, "video-send");
+    media.addSSRC(config.ssrc, "video-send");
     auto track = pc->addTrack(media);
 
     // create RTP configuration
     auto rtpConfig =
-        make_shared<rtc::RtpPacketizationConfig>(this->SSRC, "video", 96, rtc::H264RtpPacketizer::defaultClockRate);
+        make_shared<rtc::RtpPacketizationConfig>(config.ssrc, "video", 96, rtc::H264RtpPacketizer::defaultClockRate);
     // create packetizer
     auto packetizer = make_shared<rtc::H264RtpPacketizer>(rtc::H264RtpPacketizer::Separator::StartSequence, rtpConfig);
     // add RTCP SR handler
@@ -182,7 +182,7 @@ void PeerConnection::handleConnectionMessage(const nlohmann::json &message)
     }
 }
 
-void PeerConnection::close()
+PeerConnection::~PeerConnection()
 {
     track->close();
     dataChannel->close();

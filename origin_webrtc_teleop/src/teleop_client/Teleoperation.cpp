@@ -141,7 +141,6 @@ void Teleoperation::sendVideo(const std::string &remoteId, const uint8_t *frameD
     videoEncoder->encodeFrame(frameData, width, height, step);
     while(videoEncoder->nextPacket())
     {
-        // Send encoded data via WebRTC
         auto data = videoEncoder->getPacketData();
         auto len = videoEncoder->getPacketSize();
         auto timestamp = videoEncoder->getElapsedTime();
@@ -157,7 +156,6 @@ void Teleoperation::broadcastVideo(const uint8_t *frameData, int width, int heig
     videoEncoder->encodeFrame(frameData, width, height, step);
     while(videoEncoder->nextPacket())
     {
-        // Send encoded data via WebRTC
         auto data = videoEncoder->getPacketData();
         auto len = videoEncoder->getPacketSize();
         auto timestamp = videoEncoder->getElapsedTime();
@@ -168,8 +166,7 @@ void Teleoperation::broadcastVideo(const uint8_t *frameData, int width, int heig
     }
 }
 
-Teleoperation::~Teleoperation()
+void Teleoperation::addPeerConnection(const std::string &id, std::shared_ptr<PeerConnection> pc)
 {
-    for(auto &[id, pc] : peerConnectionMap) pc->close();
-    peerConnectionMap.clear();
+    peerConnectionMap.emplace(id, std::move(pc));
 }

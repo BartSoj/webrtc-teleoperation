@@ -10,6 +10,7 @@ For more information about changes and new features see [CHANGELOG.md](CHANGELOG
 
 - [nlohmann JSON](https://github.com/nlohmann/json)
 - [libdatachannel](https://github.com/paullouisageneau/libdatachannel)
+- [FFmpeg](https://ffmpeg.org/)
 
 ## Running on your PC
 
@@ -105,20 +106,16 @@ On the origin navigate to the workspace and set up the environment:
 $ . install/setup.bash
 ```
 
-Then, start the teleoperation node:
+Then, start the teleoperation node and pass signaling server IP as a parameter:
 
 ```
-$ ros2 run origin_webrtc_teleop origin_webrtc_teleop
+ros2 run origin_webrtc_teleop origin_webrtc_teleop --ros-args -p hostname:=<signaling_server_ip>
 ```
 
 ## To-Do
 
-- [ ] place the teleop_client library outside the origin_webrtc_teleop package
-- [ ] refactor the PeerConnection class to reduce the number of parameters required for construction. Consider splitting
-  it into multiple classes.
-- [ ] fix web app to show every kind of message received
-- [ ] add ImageEncode for encoding ros image topics
-- [ ] add video stream from the origin to the web app
-- [ ] send control messages from the web app to the origin for controlling the robot
+- [ ] add tests for teleoperation package
+- [ ] add robot control functionality from the web app
+- [ ] Use the NVIDIA Jetson's hardware-accelerated FFmpeg encoder
 - [ ] configure project to run in separate docker container
 - [ ] add a launch file for the origin_webrtc_teleop package

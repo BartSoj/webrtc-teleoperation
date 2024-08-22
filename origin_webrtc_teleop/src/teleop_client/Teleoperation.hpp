@@ -40,6 +40,8 @@ public:
 
     void broadcastVideo(const uint8_t *frameData, int width, int height, int step);
 
+    void addPeerConnection(const std::string &id, std::shared_ptr<PeerConnection> pc);
+
     const std::string &getLocalId() const { return localId; }
 
     const rtc::Configuration &getConfig() const { return config; }
@@ -50,13 +52,6 @@ public:
     {
         return peerConnectionMap;
     }
-
-    void addPeerConnection(const std::string &id, std::shared_ptr<PeerConnection> pc)
-    {
-        peerConnectionMap.emplace(id, std::move(pc));
-    }
-
-    ~Teleoperation();
 
 private:
     rtc::Configuration config;

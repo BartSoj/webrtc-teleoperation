@@ -29,6 +29,7 @@ public:
         weak_ptr<rtc::WebSocket> wws;
         std::string localId;
         std::string remoteId;
+        rtc::SSRC ssrc = 42;
         ChannelCallbacks channelCallbacks;
         int64_t startTime;
     };
@@ -44,13 +45,12 @@ public:
 
     void handleConnectionMessage(const json &message);
 
-    void close();
+    ~PeerConnection();
 
 private:
     void setDefaultCallbacks();
     void configureDataChannel();
 
-    const rtc::SSRC SSRC = 42;
     std::string localId;
     std::string remoteId;
     ChannelCallbacks channelCallbacks;
