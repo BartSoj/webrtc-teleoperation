@@ -30,12 +30,15 @@ public:
         std::string localId;
         std::string remoteId;
         ChannelCallbacks channelCallbacks;
+        int64_t startTime;
     };
     PeerConnection(const Configuration &config);
 
     void sendMessage(const std::string &message);
 
-    void sendVideo(const std::byte *data, size_t len, uint64_t timestamp);
+    void sendVideo(const std::byte *data, size_t len, int64_t timestampMicro);
+
+    uint32_t timestampMicroToRtp(uint64_t timestampMicro);
 
     void createDataChannel();
 

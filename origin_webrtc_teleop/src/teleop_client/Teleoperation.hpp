@@ -9,6 +9,7 @@
 #include <utility>
 
 #include "PeerConnection.hpp"
+#include "VideoEncoder.hpp"
 #include "nlohmann/json.hpp"
 #include "rtc/rtc.hpp"
 
@@ -35,7 +36,9 @@ public:
 
     void broadcastMessage(const std::string &message);
 
-    void close();
+    void sendVideo(const std::string &remoteId, const uint8_t *frameData, int width, int height, int step);
+
+    void broadcastVideo(const uint8_t *frameData, int width, int height, int step);
 
     const std::string &getLocalId() const { return localId; }
 
@@ -53,6 +56,8 @@ public:
         peerConnectionMap.emplace(id, std::move(pc));
     }
 
+    ~Teleoperation();
+
 private:
     rtc::Configuration config;
     std::string wsUrl;
@@ -65,6 +70,7 @@ private:
     std::function<void(std::string)> onChannelControlMessageCallback;
     std::string localId;
     std::unordered_map<std::string, shared_ptr<PeerConnection>> peerConnectionMap;
+    shared_ptr<VideoEncoder> videoEncoder;
 };
 
 #endif  // LIBDATACHANNEL_APP_TELEOPERATION_HPP

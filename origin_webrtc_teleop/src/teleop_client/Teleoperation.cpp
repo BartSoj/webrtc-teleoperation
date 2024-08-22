@@ -14,6 +14,8 @@ Teleoperation::Teleoperation(const std::string &localId, const std::string &host
 {
     this->localId = localId;
 
+    this->videoEncoder = std::make_shared<VideoEncoder>();
+
     wsUrl = "ws://" + hostname + ":8000/" + localId;
 
     rtc::InitLogger(rtc::LogLevel::Info);
@@ -84,6 +86,7 @@ Teleoperation::Teleoperation(const std::string &localId, const std::string &host
                 pcConfig.remoteId = id;
                 pcConfig.channelCallbacks.onChannelOpenCallback = onChannelOpenCallback;
                 pcConfig.channelCallbacks.onChannelClosedCallback = onChannelClosedCallback;
+                pcConfig.startTime = videoEncoder->getStartTime();
                 if(access == "control")
                     pcConfig.channelCallbacks.onChannelMessageCallback = onChannelControlMessageCallback;
                 else
@@ -133,7 +136,39 @@ void Teleoperation::broadcastMessage(const std::string &message)
     for(auto &[id, pc] : peerConnectionMap) pc->sendMessage(message);
 }
 
-void Teleoperation::close()
+void Teleoperation::sendVideo(const std::string &remoteId, const uint8_t *frameData, int width, int height, int step)
+{
+    videoEncoder->encodeFrame(frameData, width, height, step);
+    while(videoEncoder->nextPacket())
+    {
+        // Send encoded data via WebRTC
+        auto data = videoEncoder->getPacketData();
+        auto len = videoEncoder->getPacketSize();
+        auto timestamp = videoEncoder->getElapsedTime();
+        if(auto it = peerConnectionMap.find(remoteId); it != peerConnectionMap.end())
+        {
+            it->second->sendVideo(data, len, timestamp);
+        }
+    }
+}
+
+void Teleoperation::broadcastVideo(const uint8_t *frameData, int width, int height, int step)
+{
+    videoEncoder->encodeFrame(frameData, width, height, step);
+    while(videoEncoder->nextPacket())
+    {
+        // Send encoded data via WebRTC
+        auto data = videoEncoder->getPacketData();
+        auto len = videoEncoder->getPacketSize();
+        auto timestamp = videoEncoder->getElapsedTime();
+        for(auto &[id, pc] : peerConnectionMap)
+        {
+            pc->sendVideo(data, len, timestamp);
+        }
+    }
+}
+
+Teleoperation::~Teleoperation()
 {
     for(auto &[id, pc] : peerConnectionMap) pc->close();
     peerConnectionMap.clear();

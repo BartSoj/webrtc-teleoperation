@@ -6,8 +6,8 @@
 class OriginWebrtcTeleopNode : public rclcpp::Node
 {
 public:
-    OriginWebrtcTeleopNode();
-    ~OriginWebrtcTeleopNode();
+    explicit OriginWebrtcTeleopNode(const rclcpp::NodeOptions &options = rclcpp::NodeOptions());
+    ~OriginWebrtcTeleopNode() = default;
 
 private:
     void image_topic_callback(const sensor_msgs::msg::Image &msg) const;
