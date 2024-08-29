@@ -111,16 +111,16 @@ void Teleoperation::startSignaling()
 
 void Teleoperation::onChannelOpen(std::function<void()> callback) { onChannelOpenCallback = std::move(callback); }
 
-void Teleoperation::onChannelClosed(std::function<void()> callback) { onChannelClosedCallback = callback; }
+void Teleoperation::onChannelClosed(std::function<void()> callback) { onChannelClosedCallback = std::move(callback); }
 
 void Teleoperation::onChannelMessage(std::function<void(std::string data)> callback)
 {
-    onChannelMessageCallback = callback;
+    onChannelMessageCallback = std::move(callback);
 }
 
 void Teleoperation::onChannelControlMessage(std::function<void(std::string)> callback)
 {
-    onChannelControlMessageCallback = callback;
+    onChannelControlMessageCallback = std::move(callback);
 }
 
 void Teleoperation::sendMessage(const std::string &remoteId, const std::string &message)

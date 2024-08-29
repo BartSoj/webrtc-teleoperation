@@ -34,20 +34,62 @@ struct VideoEncoderConfig
 class VideoEncoder
 {
 public:
+    /**
+     * @brief Creates a VideoEncoder and initializes the FFmpeg encoder.
+     * @param config Configuration for the encoder.
+     *
+     * Sets up the codec context with parameters such as bit rate, resolution,
+     * and pixel format. Allocates necessary resources for encoding.
+     */
     VideoEncoder(const VideoEncoderConfig &config);
 
+    /**
+     * @brief Encodes a single video frame.
+     * @param data Pointer to the RGB24 frame data.
+     * @param width Width of the frame.
+     * @param height Height of the frame.
+     * @param step Step size for the frame data.
+     *
+     * Converts the input frame from RGB24 to YUV420P format and sends it to the encoder.
+     */
     void encodeFrame(const uint8_t *data, int width, int height, int step);
 
+    /**
+     * @brief Retrieves the next encoded packet.
+     * @return True if a packet is available, false otherwise.
+     *
+     * Attempts to receive an encoded packet from the codec context.
+     */
     bool nextPacket();
 
+    /**
+     * @brief Gets the data of the current encoded packet.
+     * @return Pointer to the packet data.
+     */
     const std::byte *getPacketData();
+
+    /**
+     * @brief Gets the size of the current encoded packet.
+     * @return Size of the packet in bytes.
+     */
 
     size_t getPacketSize();
 
+    /**
+     * @brief Gets the start time of the encoder.
+     * @return The start time in microseconds.
+     */
     int64_t getStartTime() const;
 
+    /**
+     * @brief Gets the elapsed time since the encoder started.
+     * @return The elapsed time in microseconds.
+     */
     int64_t getElapsedTime() const;
 
+    /**
+     * @brief Releases allocated resources for the encoder.
+     */
     ~VideoEncoder();
 
 private:

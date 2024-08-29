@@ -41,7 +41,7 @@ PeerConnection::PeerConnection(const Configuration &config)
     this->srReporter = srReporter;
     this->track = track;
 
-    srReporter->rtpConfig->startTimestamp = timestampMicroToRtp(config.startTime);
+    this->srReporter->rtpConfig->startTimestamp = timestampMicroToRtp(config.startTime);
 
     pc->onStateChange([](rtc::PeerConnection::State state) { std::cout << "State: " << state << std::endl; });
 

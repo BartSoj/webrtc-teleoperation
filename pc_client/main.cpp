@@ -11,7 +11,7 @@
 int main(int argc, char **argv)
 try
 {
-    auto teleoperation = std::make_shared<Teleoperation>("origin-1");
+    auto teleoperation = std::make_shared<Teleoperation>("pc-client");
     teleoperation->startSignaling();
 
     Action *streamVideoAction = new StreamVideoCvAction(teleoperation);

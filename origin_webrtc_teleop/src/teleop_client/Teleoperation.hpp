@@ -20,35 +20,105 @@ using std::weak_ptr;
 class Teleoperation
 {
 public:
+    /**
+     * @brief Creates a Teleoperation, connects to WebSocket server and configurate it.
+     * @param localId The identifier for the teleoperation session.
+     * @param hostname The hostname for the WebSocket connection (default is "127.0.0.1").
+     * @param videoEncoder VideoEncoder for encoding video frames and getting the encoded packets data.
+     */
     Teleoperation(const std::string &localId, const std::string &hostname,
                   const std::shared_ptr<VideoEncoder> &videoEncoder);
 
+    /**
+     * @brief Starts the signaling process by opening a WebSocket connection.
+     */
     void startSignaling();
 
+    /**
+     * @brief Sets the callback function to be called when a data channel is opened.
+     * @param callback The function to call when the channel opens.
+     */
     void onChannelOpen(std::function<void()> callback);
 
+    /**
+     * @brief Sets the callback function to be called when a data channel is closed.
+     * @param callback The function to call when the channel closes.
+     */
     void onChannelClosed(std::function<void()> callback);
 
+    /**
+     * @brief Sets the callback function to be called when a message is received on the data channel.
+     * @param callback The function to call when a message is received.
+     */
     void onChannelMessage(std::function<void(std::string data)> callback);
 
+    /**
+     * @brief Sets the callback function to be called when a control message is received on the data channel.
+     * @param callback The function to call when a control message is received.
+     */
     void onChannelControlMessage(std::function<void(std::string)> callback);
 
+    /**
+     * @brief Sends a text message to a specific remote peer.
+     * @param remoteId The identifier of the remote peer.
+     * @param message The message to send.
+     */
     void sendMessage(const std::string &remoteId, const std::string &message);
 
+    /**
+     * @brief Broadcasts a text message to all connected peers.
+     * @param message The message to broadcast.
+     */
     void broadcastMessage(const std::string &message);
 
+    /**
+     * @brief Sends video frame data to a specific remote peer.
+     * @param remoteId The identifier of the remote peer.
+     * @param frameData Pointer to the video frame data.
+     * @param width Width of the video frame.
+     * @param height Height of the video frame.
+     * @param step Step size for the video frame data.
+     */
     void sendVideoFrame(const std::string &remoteId, const uint8_t *frameData, int width, int height, int step);
 
+    /**
+     * @brief Broadcasts video frame data to all connected peers.
+     * @param frameData Pointer to the video frame data.
+     * @param width Width of the video frame.
+     * @param height Height of the video frame.
+     * @param step Step size for the video frame data.
+     */
     void broadcastVideoFrame(const uint8_t *frameData, int width, int height, int step);
 
+    /**
+     * @brief Adds a new peer connection to the teleoperation session.
+     * @param id The identifier for the new peer.
+     * @param pc Shared pointer to the PeerConnection object.
+     */
     void addPeerConnection(const std::string &id, std::shared_ptr<PeerConnection> pc);
 
+    /**
+     * @brief Gets the local identifier for the teleoperation.
+     * @return The local ID.
+     */
     const std::string &getLocalId() const { return localId; }
 
+    /**
+     * @brief Gets the RTC configuration used for the teleoperation session.
+     * @return The RTC configuration.
+     */
     const rtc::Configuration &getConfig() const { return config; }
 
+    /**
+     * @brief Gets the WebSocket connection used for signaling.
+     * @return Shared pointer to the WebSocket connection.
+     */
     std::shared_ptr<rtc::WebSocket> getWebSocket() const { return ws; }
 
+    /**
+     * @brief Gets the map of peer connections.
+     * @return A reference to the map of peer connections.
+     */
     const std::unordered_map<std::string, std::shared_ptr<PeerConnection>> &getPeerConnectionMap() const
     {
         return peerConnectionMap;
