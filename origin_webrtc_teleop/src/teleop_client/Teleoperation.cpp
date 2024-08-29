@@ -10,12 +10,9 @@ weak_ptr<T> make_weak_ptr(shared_ptr<T> ptr)
     return ptr;
 }
 
-Teleoperation::Teleoperation(const std::string &localId, const std::string &hostname)
+Teleoperation::Teleoperation(const std::string &localId, const std::string &hostname, const std::shared_ptr<VideoEncoder> &videoEncoder)
+    : localId(localId), videoEncoder(videoEncoder)
 {
-    this->localId = localId;
-
-    this->videoEncoder = std::make_shared<VideoEncoder>();
-
     wsUrl = "ws://" + hostname + ":8000/" + localId;
 
     rtc::InitLogger(rtc::LogLevel::Info);
@@ -86,7 +83,7 @@ Teleoperation::Teleoperation(const std::string &localId, const std::string &host
                 pcConfig.remoteId = id;
                 pcConfig.channelCallbacks.onChannelOpenCallback = onChannelOpenCallback;
                 pcConfig.channelCallbacks.onChannelClosedCallback = onChannelClosedCallback;
-                pcConfig.startTime = videoEncoder->getStartTime();
+                pcConfig.startTime = this->videoEncoder->getStartTime();
                 if(access == "control")
                     pcConfig.channelCallbacks.onChannelMessageCallback = onChannelControlMessageCallback;
                 else
@@ -136,7 +133,8 @@ void Teleoperation::broadcastMessage(const std::string &message)
     for(auto &[id, pc] : peerConnectionMap) pc->sendMessage(message);
 }
 
-void Teleoperation::sendVideo(const std::string &remoteId, const uint8_t *frameData, int width, int height, int step)
+void Teleoperation::sendVideoFrame(const std::string &remoteId, const uint8_t *frameData, int width, int height,
+                                   int step)
 {
     videoEncoder->encodeFrame(frameData, width, height, step);
     while(videoEncoder->nextPacket())
@@ -146,12 +144,12 @@ void Teleoperation::sendVideo(const std::string &remoteId, const uint8_t *frameD
         auto timestamp = videoEncoder->getElapsedTime();
         if(auto it = peerConnectionMap.find(remoteId); it != peerConnectionMap.end())
         {
-            it->second->sendVideo(data, len, timestamp);
+            it->second->sendVideoFrame(data, len, timestamp);
         }
     }
 }
 
-void Teleoperation::broadcastVideo(const uint8_t *frameData, int width, int height, int step)
+void Teleoperation::broadcastVideoFrame(const uint8_t *frameData, int width, int height, int step)
 {
     videoEncoder->encodeFrame(frameData, width, height, step);
     while(videoEncoder->nextPacket())
@@ -161,7 +159,7 @@ void Teleoperation::broadcastVideo(const uint8_t *frameData, int width, int heig
         auto timestamp = videoEncoder->getElapsedTime();
         for(auto &[id, pc] : peerConnectionMap)
         {
-            pc->sendVideo(data, len, timestamp);
+            pc->sendVideoFrame(data, len, timestamp);
         }
     }
 }

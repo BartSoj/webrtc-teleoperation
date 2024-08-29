@@ -20,13 +20,13 @@ PeerConnection::PeerConnection(const Configuration &config)
     setDefaultCallbacks();
 
     rtc::Description::Video media("video", rtc::Description::Direction::SendOnly);
-    media.addH264Codec(96);  // Must match the payload type of the external h264 RTP stream
+    media.addH264Codec(config.payloadType);  // Must match the payload type of the external h264 RTP stream
     media.addSSRC(config.ssrc, "video-send");
     auto track = pc->addTrack(media);
 
     // create RTP configuration
-    auto rtpConfig =
-        make_shared<rtc::RtpPacketizationConfig>(config.ssrc, "video", 96, rtc::H264RtpPacketizer::defaultClockRate);
+    auto rtpConfig = make_shared<rtc::RtpPacketizationConfig>(config.ssrc, "video", config.payloadType,
+                                                              rtc::H264RtpPacketizer::defaultClockRate);
     // create packetizer
     auto packetizer = make_shared<rtc::H264RtpPacketizer>(rtc::H264RtpPacketizer::Separator::StartSequence, rtpConfig);
     // add RTCP SR handler
@@ -125,7 +125,7 @@ void PeerConnection::sendMessage(const std::string &message)
     if(dataChannel && dataChannel->isOpen()) this->dataChannel->send(message);
 }
 
-void PeerConnection::sendVideo(const std::byte *data, size_t len, int64_t timestampMicro)
+void PeerConnection::sendVideoFrame(const std::byte *data, size_t len, int64_t timestampMicro)
 {
     if(track != nullptr && track->isOpen())
     {

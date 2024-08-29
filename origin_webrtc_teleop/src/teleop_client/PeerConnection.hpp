@@ -29,7 +29,9 @@ public:
         weak_ptr<rtc::WebSocket> wws;
         std::string localId;
         std::string remoteId;
-        rtc::SSRC ssrc = 42;
+        rtc::SSRC ssrc = 42;  // SSRC (Synchronization Source) identifier for uniquely identifying the RTP stream; can
+                              // be arbitrary as there is only one media stream
+        uint8_t payloadType = 96;  // Payload type 96 is a placeholder for dynamically negotiated media format
         ChannelCallbacks channelCallbacks;
         int64_t startTime;
     };
@@ -37,7 +39,7 @@ public:
 
     void sendMessage(const std::string &message);
 
-    void sendVideo(const std::byte *data, size_t len, int64_t timestampMicro);
+    void sendVideoFrame(const std::byte *data, size_t len, int64_t timestampMicro);
 
     uint32_t timestampMicroToRtp(uint64_t timestampMicro);
 

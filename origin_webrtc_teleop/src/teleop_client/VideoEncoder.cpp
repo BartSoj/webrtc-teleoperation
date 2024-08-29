@@ -2,7 +2,7 @@
 
 #include <iostream>
 
-VideoEncoder::VideoEncoder()
+VideoEncoder::VideoEncoder(const VideoEncoderConfig& config)
 {
     // Initialize FFmpeg encoder
     const AVCodec* codec = avcodec_find_encoder(AV_CODEC_ID_H264);
@@ -18,19 +18,21 @@ VideoEncoder::VideoEncoder()
         std::cerr << "Error: Could not allocate codec context" << std::endl;
         return;
     }
-    codecContext->bit_rate = 1000000;
-    codecContext->width = 640;
-    codecContext->height = 480;
-    codecContext->time_base = AVRational{1, 30};
-    codecContext->gop_size = 10;
-    codecContext->pix_fmt = AV_PIX_FMT_YUV420P;
-    codecContext->flags |= AV_CODEC_FLAG_LOW_DELAY;
-    codecContext->max_b_frames = 0;
-    codecContext->refs = 1;
+    codecContext->bit_rate = config.bit_rate;
+    codecContext->width = config.width;
+    codecContext->height = config.height;
+    codecContext->time_base = config.time_base;
+    codecContext->gop_size = config.gop_size;
+    codecContext->pix_fmt = config.pix_fmt;
+    codecContext->flags |= config.codec_flags;
+    codecContext->max_b_frames = config.max_b_frames;
+    codecContext->refs = config.refs;
 
     AVDictionary* opts = nullptr;
-    av_dict_set(&opts, "preset", "ultrafast", 0);
-    av_dict_set(&opts, "tune", "zerolatency", 0);
+    for(const auto& [key, value] : config.options)
+    {
+        av_dict_set(&opts, key.c_str(), value.c_str(), 0);
+    }
 
     if(avcodec_open2(codecContext, codec, &opts) < 0)
     {

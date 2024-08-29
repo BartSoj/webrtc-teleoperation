@@ -20,7 +20,8 @@ using std::weak_ptr;
 class Teleoperation
 {
 public:
-    Teleoperation(const std::string &localId, const std::string &hostname = "127.0.0.1");
+    Teleoperation(const std::string &localId, const std::string &hostname,
+                  const std::shared_ptr<VideoEncoder> &videoEncoder);
 
     void startSignaling();
 
@@ -36,9 +37,9 @@ public:
 
     void broadcastMessage(const std::string &message);
 
-    void sendVideo(const std::string &remoteId, const uint8_t *frameData, int width, int height, int step);
+    void sendVideoFrame(const std::string &remoteId, const uint8_t *frameData, int width, int height, int step);
 
-    void broadcastVideo(const uint8_t *frameData, int width, int height, int step);
+    void broadcastVideoFrame(const uint8_t *frameData, int width, int height, int step);
 
     void addPeerConnection(const std::string &id, std::shared_ptr<PeerConnection> pc);
 

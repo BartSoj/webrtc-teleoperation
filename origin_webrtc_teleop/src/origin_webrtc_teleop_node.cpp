@@ -9,14 +9,18 @@ using std::placeholders::_1;
 OriginWebrtcTeleopNode::OriginWebrtcTeleopNode(const rclcpp::NodeOptions &options)
     : Node("origin_webrtc_teleop_node", options)
 {
-    std::string hostname = this->get_parameter("hostname").as_string();
-
     image_subscription_ = this->create_subscription<sensor_msgs::msg::Image>(
         "camera/color/image_raw", 10, std::bind(&OriginWebrtcTeleopNode::image_topic_callback, this, _1));
 
     odometry_subscription_ = this->create_subscription<nav_msgs::msg::Odometry>(
         "/robot/odom", 10, std::bind(&OriginWebrtcTeleopNode::odom_topic_callback, this, _1));
-    teleoperation = std::make_shared<Teleoperation>("origin-1", hostname);
+
+    std::string localId = this->get_parameter_or("local_id", rclcpp::ParameterValue("origin")).get<std::string>();
+    std::string hostname = this->get_parameter_or("hostname", rclcpp::ParameterValue("127.0.0.1")).get<std::string>();
+
+    VideoEncoderConfig encoder_config;
+    auto encoder = std::make_shared<VideoEncoder>(encoder_config);
+    teleoperation = std::make_shared<Teleoperation>(localId, hostname, encoder);
 
     teleoperation->onChannelOpen([this]() { RCLCPP_INFO(this->get_logger(), "Channel open"); });
 
@@ -35,7 +39,7 @@ OriginWebrtcTeleopNode::OriginWebrtcTeleopNode(const rclcpp::NodeOptions &option
 void OriginWebrtcTeleopNode::image_topic_callback(const sensor_msgs::msg::Image &msg) const
 {
     RCLCPP_INFO(this->get_logger(), "Image: '%s'", msg.header.frame_id.c_str());
-    teleoperation->broadcastVideo(msg.data.data(), msg.width, msg.height, static_cast<int>(msg.step));
+    teleoperation->broadcastVideoFrame(msg.data.data(), msg.width, msg.height, static_cast<int>(msg.step));
 }
 
 void OriginWebrtcTeleopNode::odom_topic_callback(const nav_msgs::msg::Odometry &msg) const
