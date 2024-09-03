@@ -1,0 +1,34 @@
+FROM ros:humble
+
+WORKDIR /root/ws
+
+RUN apt-get update && apt-get install -y \
+    libavcodec-dev \
+    libavutil-dev \
+    libswscale-dev \
+    libavformat-dev \
+    git \
+    cmake \
+    build-essential \
+    pkg-config \
+    nlohmann-json3-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN mkdir -p external/libdatachannel \
+    && git clone https://github.com/paullouisageneau/libdatachannel.git /root/ws/external/libdatachannel \
+    && cd /root/ws/external/libdatachannel \
+    && git submodule update --init --recursive --depth 1 \
+    && cmake -B build -DUSE_GNUTLS=0 -DUSE_NICE=0 -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/opt/ros/humble \
+    && cd build \
+    && make -j2 \
+    && make install
+
+COPY . /root/ws/src/origin_webrtc_teleop
+
+RUN . /opt/ros/humble/setup.sh && \
+    colcon build --packages-select origin_webrtc_teleop
+
+RUN echo "source /opt/ros/humble/setup.bash" >> ~/.bashrc && \
+    echo "source /root/ws/install/setup.bash" >> ~/.bashrc
+
+CMD ["bash", "-c", "source /root/ws/install/setup.bash && ros2 launch origin_webrtc_teleop origin_webrtc_teleop.launch.py"]

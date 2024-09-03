@@ -1,0 +1,11 @@
+version: '3'
+services:
+  webrtc_teleop:
+    build:
+      context: ../origin_webrtc_teleop
+      dockerfile: ../docker/Dockerfile.dev
+    container_name: webrtc_teleop_dev
+    privileged: true
+    network_mode: host
+    volumes:
+      - /dev/bus/usb:/dev/bus/usb
