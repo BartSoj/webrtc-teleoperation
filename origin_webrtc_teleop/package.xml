@@ -15,10 +15,7 @@
     <depend>LibDataChannel</depend>
     <depend>Threads</depend>
     <depend>nlohmann_json</depend>
-    <depend>libavcodec-dev</depend>
-    <depend>libavformat-dev</depend>
-    <depend>libswscale-dev</depend>
-    <depend>libavutil-dev</depend>
+    <depend>ffmpeg-dev</depend>
 
     <test_depend>ament_lint_auto</test_depend>
     <test_depend>ament_lint_common</test_depend>
