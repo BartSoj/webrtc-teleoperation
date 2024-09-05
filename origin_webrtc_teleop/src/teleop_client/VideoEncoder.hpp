@@ -50,7 +50,9 @@ public:
      * @param height Height of the frame.
      * @param step Step size for the frame data.
      *
-     * Converts the input frame from RGB24 to YUV420P format and sends it to the encoder.
+     * Takes a raw RGB24 frame and encodes it to H.264 format.
+     * @note The input frame dimensions (width and height) must match the encoder's configured
+     * resolution. If they differ, the frame will be scaled.
      */
     void encodeFrame(const uint8_t *data, int width, int height, int step);
 

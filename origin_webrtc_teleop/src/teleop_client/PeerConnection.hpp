@@ -57,11 +57,6 @@ public:
     void sendVideoFrame(const std::byte *data, size_t len, int64_t timestampMicro);
 
     /**
-     * @brief Creates a new data channel and configures it.
-     */
-    void createDataChannel();
-
-    /**
      * @brief Handles incoming connection messages to establish a WebRTC peer connection.
      * @param message JSON message containing connection information.
      */
@@ -70,14 +65,10 @@ public:
     ~PeerConnection();
 
 private:
-    /**
-     * @brief Sets default callbacks for the data channel events.
-     */
     void setDefaultCallbacks();
 
-    /**
-     * @brief Configures the data channel and sets the callbacks.
-     */
+    void createDataChannel();
+
     void configureDataChannel();
 
     /**

@@ -38,25 +38,25 @@ public:
      * @brief Sets the callback function to be called when a data channel is opened.
      * @param callback The function to call when the channel opens.
      */
-    void onChannelOpen(std::function<void()> callback);
+    void onChannelOpen(const std::function<void()> &callback);
 
     /**
      * @brief Sets the callback function to be called when a data channel is closed.
      * @param callback The function to call when the channel closes.
      */
-    void onChannelClosed(std::function<void()> callback);
+    void onChannelClosed(const std::function<void()> &callback);
 
     /**
      * @brief Sets the callback function to be called when a message is received on the data channel.
      * @param callback The function to call when a message is received.
      */
-    void onChannelMessage(std::function<void(std::string data)> callback);
+    void onChannelMessage(const std::function<void(std::string data)> &callback);
 
     /**
      * @brief Sets the callback function to be called when a control message is received on the data channel.
      * @param callback The function to call when a control message is received.
      */
-    void onChannelControlMessage(std::function<void(std::string)> callback);
+    void onChannelControlMessage(const std::function<void(std::string)> &callback);
 
     /**
      * @brief Sends a text message to a specific remote peer.

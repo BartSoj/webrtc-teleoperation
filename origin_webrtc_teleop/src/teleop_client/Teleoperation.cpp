@@ -109,18 +109,18 @@ void Teleoperation::startSignaling()
     wsFuture.get();
 }
 
-void Teleoperation::onChannelOpen(std::function<void()> callback) { onChannelOpenCallback = std::move(callback); }
+void Teleoperation::onChannelOpen(const std::function<void()> &callback) { onChannelOpenCallback = callback; }
 
-void Teleoperation::onChannelClosed(std::function<void()> callback) { onChannelClosedCallback = std::move(callback); }
+void Teleoperation::onChannelClosed(const std::function<void()> &callback) { onChannelClosedCallback = callback; }
 
-void Teleoperation::onChannelMessage(std::function<void(std::string data)> callback)
+void Teleoperation::onChannelMessage(const std::function<void(std::string data)> &callback)
 {
-    onChannelMessageCallback = std::move(callback);
+    onChannelMessageCallback = callback;
 }
 
-void Teleoperation::onChannelControlMessage(std::function<void(std::string)> callback)
+void Teleoperation::onChannelControlMessage(const std::function<void(std::string)> &callback)
 {
-    onChannelControlMessageCallback = std::move(callback);
+    onChannelControlMessageCallback = callback;
 }
 
 void Teleoperation::sendMessage(const std::string &remoteId, const std::string &message)
