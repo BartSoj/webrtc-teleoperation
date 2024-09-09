@@ -3,6 +3,8 @@
 #include <memory>
 #include <nlohmann/json.hpp>
 
+#include "TeleopConfigParser.hpp"
+
 using nlohmann::json;
 using std::placeholders::_1;
 
@@ -15,12 +17,9 @@ OriginWebrtcTeleopNode::OriginWebrtcTeleopNode(const rclcpp::NodeOptions &option
     odometry_subscription_ = this->create_subscription<nav_msgs::msg::Odometry>(
         "/robot/odom", 10, std::bind(&OriginWebrtcTeleopNode::odom_topic_callback, this, _1));
 
-    std::string localId = this->get_parameter_or("local_id", rclcpp::ParameterValue("origin")).get<std::string>();
-    std::string hostname = this->get_parameter_or("hostname", rclcpp::ParameterValue("127.0.0.1")).get<std::string>();
-
-    VideoEncoderConfig encoder_config;
-    auto encoder = std::make_shared<VideoEncoder>(encoder_config);
-    teleoperation = std::make_shared<Teleoperation>(localId, hostname, encoder);
+    TeleopConfigParser teleoperationConfigParser(this);
+    auto teleoperationConfig = teleoperationConfigParser.parse();
+    teleoperation = std::make_shared<Teleoperation>(teleoperationConfig);
 
     teleoperation->onChannelOpen([this]() { RCLCPP_INFO(this->get_logger(), "Channel open"); });
 

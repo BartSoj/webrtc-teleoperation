@@ -26,6 +26,7 @@ include_directories(${FFMPEG_INCLUDE_DIRS})
 add_executable(${PROJECT_NAME}
         src/origin_webrtc_teleop_node_main.cpp
         src/origin_webrtc_teleop_node.cpp
+        src/TeleopConfigParser.cpp
         src/teleop_client/PeerConnection.cpp
         src/teleop_client/Teleoperation.cpp
         src/teleop_client/VideoEncoder.cpp)
