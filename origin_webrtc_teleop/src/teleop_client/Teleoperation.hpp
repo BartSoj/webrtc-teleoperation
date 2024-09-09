@@ -17,17 +17,28 @@ using std::future;
 using std::shared_ptr;
 using std::weak_ptr;
 
+struct TeleoperationConfig
+{
+    /** The identifier for the teleoperation session. */
+    std::string localId;
+    /** The hostname for the WebSocket connection. */
+    std::string hostname = "127.0.0.1";
+    /** The port for the WebSocket connection. */
+    std::string port = "8000";
+    /** The STUN server url for ICE candidates. */
+    std::string stunServer = "stun:stun.l.google.com:19302";
+    /** The VideoEncoder for encoding video frames and getting the encoded packets data. */
+    std::shared_ptr<VideoEncoder> videoEncoder;
+};
+
 class Teleoperation
 {
 public:
     /**
      * @brief Creates a Teleoperation, connects to WebSocket server and configurate it.
-     * @param localId The identifier for the teleoperation session.
-     * @param hostname The hostname for the WebSocket connection (default is "127.0.0.1").
-     * @param videoEncoder VideoEncoder for encoding video frames and getting the encoded packets data.
+     * @param config Configuration settings for the teleoperation.
      */
-    Teleoperation(const std::string &localId, const std::string &hostname,
-                  const std::shared_ptr<VideoEncoder> &videoEncoder);
+    Teleoperation(const TeleoperationConfig &config);
 
     /**
      * @brief Starts the signaling process by opening a WebSocket connection.
@@ -107,7 +118,7 @@ public:
      * @brief Gets the RTC configuration used for the teleoperation session.
      * @return The RTC configuration.
      */
-    const rtc::Configuration &getConfig() const { return config; }
+    const rtc::Configuration &getConfig() const { return rtcConfig; }
 
     /**
      * @brief Gets the WebSocket connection used for signaling.
@@ -125,7 +136,7 @@ public:
     }
 
 private:
-    rtc::Configuration config;
+    rtc::Configuration rtcConfig;
     std::string wsUrl;
     shared_ptr<rtc::WebSocket> ws;
     std::promise<void> wsPromise;

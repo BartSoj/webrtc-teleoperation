@@ -10,15 +10,14 @@ weak_ptr<T> make_weak_ptr(shared_ptr<T> ptr)
     return ptr;
 }
 
-Teleoperation::Teleoperation(const std::string &localId, const std::string &hostname, const std::shared_ptr<VideoEncoder> &videoEncoder)
-    : localId(localId), videoEncoder(videoEncoder)
+Teleoperation::Teleoperation(const TeleoperationConfig &config)
+    : localId(config.localId), videoEncoder(config.videoEncoder)
 {
-    wsUrl = "ws://" + hostname + ":8000/" + localId;
+    wsUrl = "ws://" + config.hostname + ":" + config.port + "/" + localId;
 
     rtc::InitLogger(rtc::LogLevel::Info);
 
-    std::string stunServer = "stun:stun.l.google.com:19302";
-    config.iceServers.emplace_back(stunServer);
+    rtcConfig.iceServers.emplace_back(config.stunServer);
 
     std::cout << "The local ID is " << localId << std::endl;
 
@@ -77,7 +76,7 @@ Teleoperation::Teleoperation(const std::string &localId, const std::string &host
             {
                 std::cout << "Answering to " + id << std::endl;
                 PeerConnection::Configuration pcConfig;
-                pcConfig.rtcConfig = config;
+                pcConfig.rtcConfig = rtcConfig;
                 pcConfig.wws = make_weak_ptr(ws);
                 pcConfig.localId = this->localId;
                 pcConfig.remoteId = id;
