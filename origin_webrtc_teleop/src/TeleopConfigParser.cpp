@@ -57,7 +57,7 @@ std::map<std::string, std::string> TeleopConfigParser::parseVideoEncoderOptions(
 {
     std::map<std::string, std::string> options;
 
-    auto parameters = node_->list_parameters({"video_encoder.options"}, 1);
+    auto parameters = node_->list_parameters({"video_encoder.options"}, 2);
 
     for(const auto& param_name : parameters.names)
     {
