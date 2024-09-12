@@ -2,8 +2,9 @@ version: '3'
 services:
   webrtc_teleop:
     build:
-      context: ../origin_webrtc_teleop
-      dockerfile: ../docker/Dockerfile.dev
+      context: ..
+      target: dev
+      dockerfile: docker/Dockerfile
     container_name: webrtc_teleop_dev
     privileged: true
     network_mode: host
