@@ -19,15 +19,15 @@ using std::weak_ptr;
 
 struct TeleoperationConfig
 {
-    /** The identifier for the teleoperation session. */
+    /// @brief The identifier for the teleoperation session.
     std::string localId;
-    /** The hostname for the WebSocket connection. */
+    /// @brief The hostname for the WebSocket connection.
     std::string hostname = "127.0.0.1";
-    /** The port for the WebSocket connection. */
+    /// @brief The port for the WebSocket connection.
     std::string port = "8000";
-    /** The STUN server url for ICE candidates. */
+    /// @brief The STUN server url for ICE candidates.
     std::string stunServer = "stun:stun.l.google.com:19302";
-    /** The VideoEncoder for encoding video frames and getting the encoded packets data. */
+    /// @brief The VideoEncoder for encoding video frames and getting the encoded packets data.
     std::shared_ptr<VideoEncoder> videoEncoder;
 };
 
