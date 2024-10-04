@@ -25,8 +25,17 @@ RUN mkdir -p external/libdatachannel \
     && make -j2 \
     && make install
 
-COPY . /root/ws/src/origin_webrtc_teleop
+COPY . /root/ws/src/webrtc_teleop
 
+# Build teleop_client_lib
+RUN mkdir -p /root/ws/build/teleop_client_lib && \
+    cd /root/ws/build/teleop_client_lib && \
+    cmake /root/ws/src/webrtc_teleop/teleop_client_lib && \
+    make -j2 && \
+    make install && \
+    ldconfig
+
+# build origin_webrtc_teleop
 RUN . /opt/ros/humble/setup.sh && \
     colcon build --packages-select origin_webrtc_teleop
 
