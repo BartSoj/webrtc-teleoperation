@@ -7,11 +7,19 @@
     <maintainer email="b.sojka@avular.com">Bartosz Sojka</maintainer>
     <license>Avular Confidential</license>
 
+    <buildtool_depend>cmake_avular</buildtool_depend>
     <buildtool_depend>ament_cmake</buildtool_depend>
+    <buildtool_depend>ament_cmake_auto</buildtool_depend>
+    <buildtool_depend>ament_cmake_python</buildtool_depend>
 
     <depend>rclcpp</depend>
+    <depend>rclcpp_avular</depend>
+    <depend>origin_msgs</depend>
     <depend>sensor_msgs</depend>
+    <depend>std_srvs</depend>
+    <depend>std_msgs</depend>
     <depend>nav_msgs</depend>
+    <depend>geometry_msgs</depend>
     <depend>LibDataChannel</depend>
     <depend>Threads</depend>
     <depend>nlohmann_json</depend>

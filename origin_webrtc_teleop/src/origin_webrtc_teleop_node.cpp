@@ -12,10 +12,12 @@ OriginWebrtcTeleopNode::OriginWebrtcTeleopNode(const rclcpp::NodeOptions &option
     : Node("origin_webrtc_teleop_node", options)
 {
     image_subscription_ = this->create_subscription<sensor_msgs::msg::Image>(
-        "camera/color/image_raw", 10, std::bind(&OriginWebrtcTeleopNode::image_topic_callback, this, _1));
+        "/robot/camera/color/image_raw", 10, std::bind(&OriginWebrtcTeleopNode::image_topic_callback, this, _1));
 
     odometry_subscription_ = this->create_subscription<nav_msgs::msg::Odometry>(
         "/robot/odom", 10, std::bind(&OriginWebrtcTeleopNode::odom_topic_callback, this, _1));
+
+    controller_ = std::make_unique<OriginController>(shared_from_this());
 
     TeleopConfigParser teleoperationConfigParser(this);
     auto teleoperationConfig = teleoperationConfigParser.parse();
@@ -30,7 +32,10 @@ OriginWebrtcTeleopNode::OriginWebrtcTeleopNode(const rclcpp::NodeOptions &option
 
     teleoperation->onChannelControlMessage(
         [this](const std::string &message)
-        { RCLCPP_INFO(this->get_logger(), "Control message: '%s'", message.c_str()); });
+        {
+            RCLCPP_INFO(this->get_logger(), "Control message: '%s'", message.c_str());
+            controller_->handleControlMessage(message);
+        });
 
     teleoperation->startSignaling();
 }
@@ -47,17 +52,18 @@ void OriginWebrtcTeleopNode::odom_topic_callback(const nav_msgs::msg::Odometry &
 
     json odometry_data = {
         {"type", "odometry"},
-        {{"position",
-          {{"x", msg.pose.pose.position.x}, {"y", msg.pose.pose.position.y}, {"z", msg.pose.pose.position.z}}},
-         {"orientation",
-          {{"x", msg.pose.pose.orientation.x},
-           {"y", msg.pose.pose.orientation.y},
-           {"z", msg.pose.pose.orientation.z},
-           {"w", msg.pose.pose.orientation.w}}},
-         {"linear",
-          {{"x", msg.twist.twist.linear.x}, {"y", msg.twist.twist.linear.y}, {"z", msg.twist.twist.linear.z}}},
-         {"angular",
-          {{"x", msg.twist.twist.angular.x}, {"y", msg.twist.twist.angular.y}, {"z", msg.twist.twist.angular.z}}}}};
+        {"odometry",
+         {{"position",
+           {{"x", msg.pose.pose.position.x}, {"y", msg.pose.pose.position.y}, {"z", msg.pose.pose.position.z}}},
+          {"orientation",
+           {{"x", msg.pose.pose.orientation.x},
+            {"y", msg.pose.pose.orientation.y},
+            {"z", msg.pose.pose.orientation.z},
+            {"w", msg.pose.pose.orientation.w}}},
+          {"linear",
+           {{"x", msg.twist.twist.linear.x}, {"y", msg.twist.twist.linear.y}, {"z", msg.twist.twist.linear.z}}},
+          {"angular",
+           {{"x", msg.twist.twist.angular.x}, {"y", msg.twist.twist.angular.y}, {"z", msg.twist.twist.angular.z}}}}}};
 
     teleoperation->broadcastMessage(odometry_data.dump());
 }
