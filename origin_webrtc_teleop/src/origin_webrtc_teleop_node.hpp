@@ -12,6 +12,7 @@ public:
      * @param options Options for configuring the ROS2 node.
      */
     explicit OriginWebrtcTeleopNode(const rclcpp::NodeOptions &options = rclcpp::NodeOptions());
+    void startTeleoperation();
     ~OriginWebrtcTeleopNode() = default;
 
 private:

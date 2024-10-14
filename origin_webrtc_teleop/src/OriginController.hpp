@@ -5,12 +5,13 @@
 #include <geometry_msgs/msg/twist.hpp>
 #include "origin_msgs/srv/set_control_mode.hpp"
 #include "origin_msgs/srv/return_control_mode.hpp"
+#include <atomic>
 #include <nlohmann/json.hpp>
 
 class OriginController {
 public:
     /**
-     * @brief Constructor for OriginController for controlling rebot using commands.
+     * @brief Constructor for OriginController for controlling robot using commands.
      * @param node Shared pointer to the ROS node for creating publishers and clients.
      */
     OriginController(rclcpp::Node::SharedPtr node);
@@ -19,7 +20,7 @@ public:
      * @brief Handles incoming control messages.
      * @param message JSON-formatted string containing control commands.
      *
-     * This function parses the incoming message and calls the appropriate fucntions to control the robot.
+     * This function parses the incoming message and calls the appropriate functions to control the robot.
      */
     void handleControlMessage(const std::string& message);
 
@@ -29,7 +30,7 @@ private:
     rclcpp::Client<origin_msgs::srv::SetControlMode>::SharedPtr set_control_mode_client_;
     rclcpp::Client<origin_msgs::srv::ReturnControlMode>::SharedPtr reset_control_mode_client_;
     rclcpp::Client<origin_msgs::srv::ReturnControlMode>::SharedPtr previous_control_mode_client_;
-    bool changing_control_mode_ = false;
+    std::atomic<bool> changing_control_mode_{false};
 
     /**
      * @brief Requests control mode change to user control.
@@ -60,6 +61,9 @@ private:
      * and publishes them as a Twist message.
      */
     void publishVelocity(const nlohmann::json& control_message);
+
+    void handleSetControlModeResponse(rclcpp::Client<origin_msgs::srv::SetControlMode>::SharedFuture future);
+    void handleReturnControlModeResponse(rclcpp::Client<origin_msgs::srv::ReturnControlMode>::SharedFuture future);
 };
 
 #endif // ORIGIN_CONTROLLER_HPP

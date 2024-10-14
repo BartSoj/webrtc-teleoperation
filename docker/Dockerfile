@@ -14,6 +14,7 @@ RUN apt-get update && apt-get install -y \
     build-essential \
     pkg-config \
     nlohmann-json3-dev \
+    ros-humble-rmw-cyclonedds-cpp \
     && rm -rf /var/lib/apt/lists/*
 
 RUN mkdir -p external/libdatachannel \
@@ -24,6 +25,10 @@ RUN mkdir -p external/libdatachannel \
     && cd build \
     && make -j2 \
     && make install
+
+# Setup message definitions
+COPY origin-msgs_arm64_1.0.1.deb /
+RUN apt update && apt install -y /origin-msgs_arm64_1.0.1.deb
 
 COPY . /root/ws/src/webrtc_teleop
 

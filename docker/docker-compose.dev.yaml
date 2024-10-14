@@ -6,7 +6,12 @@ services:
       target: dev
       dockerfile: docker/Dockerfile
     container_name: webrtc_teleop_dev
+    environment:
+      ROS_DOMAIN_ID: ${ROS_DOMAIN_ID}
+      RMW_IMPLEMENTATION: rmw_cyclonedds_cpp
     privileged: true
     network_mode: host
+    ipc: host
     volumes:
+      - /data/app/avular/dds:/dds
       - /dev/bus/usb:/dev/bus/usb

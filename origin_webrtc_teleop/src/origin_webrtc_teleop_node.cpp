@@ -16,7 +16,10 @@ OriginWebrtcTeleopNode::OriginWebrtcTeleopNode(const rclcpp::NodeOptions &option
 
     odometry_subscription_ = this->create_subscription<nav_msgs::msg::Odometry>(
         "/robot/odom", 10, std::bind(&OriginWebrtcTeleopNode::odom_topic_callback, this, _1));
+}
 
+void OriginWebrtcTeleopNode::startTeleoperation()
+{
     controller_ = std::make_unique<OriginController>(shared_from_this());
 
     TeleopConfigParser teleoperationConfigParser(this);

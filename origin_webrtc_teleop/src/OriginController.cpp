@@ -1,4 +1,4 @@
-#include "origin_controller.hpp"
+#include "OriginController.hpp"
 
 OriginController::OriginController(rclcpp::Node::SharedPtr node)
     : node_(node)
@@ -14,16 +14,14 @@ void OriginController::handleControlMessage(const std::string& message)
     try {
         nlohmann::json control_message = nlohmann::json::parse(message);
         if (control_message["type"] == "control") {
-            if (control_message["reset_control"] && !changing_control_mode_) {
-                changing_control_mode_ = true;
+            bool expected = false;
+            if (control_message["reset_control"] && changing_control_mode_.compare_exchange_strong(expected, true)) {
                 resetControl();
             }
-            else if (control_message["previous_control"] && !changing_control_mode_) {
-                changing_control_mode_ = true;
+            else if (control_message["previous_control"] && changing_control_mode_.compare_exchange_strong(expected, true)) {
                 previousControl();
             }
-            else if (control_message["request_control"] && !changing_control_mode_) {
-                changing_control_mode_ = true;
+            else if (control_message["request_control"] && changing_control_mode_.compare_exchange_strong(expected, true)) {
                 requestControl();
             }
             publishVelocity(control_message);
@@ -38,15 +36,16 @@ void OriginController::requestControl()
     auto request = std::make_shared<origin_msgs::srv::SetControlMode::Request>();
     request->mode.mode = 30;  // 30 is the mode for user control
 
-    auto result_future = set_control_mode_client_->async_send_request(request);
-
-    result_future.then(
-        [this](rclcpp::Client<origin_msgs::srv::SetControlMode>::SharedFuture future) {
-            auto result = future.get();
-            changing_control_mode_ = false;
-            RCLCPP_INFO(node_->get_logger(), "Set control mode service call completed");
+    while (!set_control_mode_client_->wait_for_service(std::chrono::seconds(1))) {
+        if (!rclcpp::ok()) {
+            RCLCPP_ERROR(node_->get_logger(), "Interrupted while waiting for the service. Exiting.");
+            return;
         }
-    );
+        RCLCPP_INFO(node_->get_logger(), "Service not available, waiting again...");
+    }
+
+    auto result_future = set_control_mode_client_->async_send_request(request,
+        std::bind(&OriginController::handleSetControlModeResponse, this, std::placeholders::_1));
 }
 
 void OriginController::resetControl()
@@ -54,15 +53,16 @@ void OriginController::resetControl()
     auto request = std::make_shared<origin_msgs::srv::ReturnControlMode::Request>();
     request->mode_from.mode = 30;
 
-    auto result_future = reset_control_mode_client_->async_send_request(request);
-
-    result_future.then(
-        [this](rclcpp::Client<origin_msgs::srv::ReturnControlMode>::SharedFuture future) {
-            auto result = future.get();
-            changing_control_mode_ = false;
-            RCLCPP_INFO(node_->get_logger(), "Reset control mode service call completed");
+    while (!reset_control_mode_client_->wait_for_service(std::chrono::seconds(1))) {
+        if (!rclcpp::ok()) {
+            RCLCPP_ERROR(node_->get_logger(), "Interrupted while waiting for the service. Exiting.");
+            return;
         }
-    );
+        RCLCPP_INFO(node_->get_logger(), "Service not available, waiting again...");
+    }
+
+    auto result_future = reset_control_mode_client_->async_send_request(request,
+        std::bind(&OriginController::handleReturnControlModeResponse, this, std::placeholders::_1));
 }
 
 void OriginController::previousControl()
@@ -70,15 +70,29 @@ void OriginController::previousControl()
     auto request = std::make_shared<origin_msgs::srv::ReturnControlMode::Request>();
     request->mode_from.mode = 30;
 
-    auto result_future = previous_control_mode_client_->async_send_request(request);
-
-    result_future.then(
-        [this](rclcpp::Client<origin_msgs::srv::ReturnControlMode>::SharedFuture future) {
-            auto result = future.get();
-            changing_control_mode_ = false;
-            RCLCPP_INFO(node_->get_logger(), "Previous control mode service call completed");
+    while (!previous_control_mode_client_->wait_for_service(std::chrono::seconds(1))) {
+        if (!rclcpp::ok()) {
+            RCLCPP_ERROR(node_->get_logger(), "Interrupted while waiting for the service. Exiting.");
+            return;
         }
-    );
+        RCLCPP_INFO(node_->get_logger(), "Service not available, waiting again...");
+    }
+
+    auto result_future = previous_control_mode_client_->async_send_request(request,
+        std::bind(&OriginController::handleReturnControlModeResponse, this, std::placeholders::_1));}
+
+void OriginController::handleSetControlModeResponse(rclcpp::Client<origin_msgs::srv::SetControlMode>::SharedFuture future)
+{
+    auto result = future.get();
+    changing_control_mode_.store(false);
+    RCLCPP_INFO(node_->get_logger(), "Set control mode service call completed");
+}
+
+void OriginController::handleReturnControlModeResponse(rclcpp::Client<origin_msgs::srv::ReturnControlMode>::SharedFuture future)
+{
+    auto result = future.get();
+    changing_control_mode_.store(false);
+    RCLCPP_INFO(node_->get_logger(), "Return control mode service call completed");
 }
 
 void OriginController::publishVelocity(const nlohmann::json& control_message)
@@ -89,7 +103,7 @@ void OriginController::publishVelocity(const nlohmann::json& control_message)
     twist_msg.linear.z = 0;
     twist_msg.angular.x = 0;
     twist_msg.angular.y = 0;
-    twist_msg.angular.z = control_message["rotational"];
+    twist_msg.angular.z = control_message["rotation"];
 
     cmd_vel_publisher_->publish(twist_msg);
 }

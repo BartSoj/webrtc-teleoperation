@@ -7,7 +7,6 @@ endif ()
 
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
-find_package(rclcpp_avular REQUIRED)
 find_package(origin_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(std_srvs REQUIRED)
@@ -29,6 +28,7 @@ ament_target_dependencies(${PROJECT_NAME}
         rclcpp
         sensor_msgs
         nav_msgs
+        origin_msgs
 )
 
 target_link_libraries(${PROJECT_NAME}
