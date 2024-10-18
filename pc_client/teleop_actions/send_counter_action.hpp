@@ -14,7 +14,7 @@ protected:
     bool loop() override;
 
 private:
-    int counter;
+    int counter_;
 };
 
 #endif  // LIBDATACHANNEL_APP_SENDCOUNTERACTION_H

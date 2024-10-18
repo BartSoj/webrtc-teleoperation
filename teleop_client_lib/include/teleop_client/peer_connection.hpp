@@ -78,13 +78,13 @@ private:
      */
     uint32_t timestampMicroToRtp(uint64_t timestampMicro);
 
-    std::string localId;
-    std::string remoteId;
-    ChannelCallbacks channelCallbacks;
-    shared_ptr<rtc::PeerConnection> rtcPeerConnection;
-    shared_ptr<rtc::DataChannel> dataChannel;
-    shared_ptr<rtc::Track> track;
-    shared_ptr<rtc::RtcpSrReporter> srReporter;
+    std::string localId_;
+    std::string remoteId_;
+    ChannelCallbacks channelCallbacks_;
+    shared_ptr<rtc::PeerConnection> rtcPeerConnection_;
+    shared_ptr<rtc::DataChannel> dataChannel_;
+    shared_ptr<rtc::Track> track_;
+    shared_ptr<rtc::RtcpSrReporter> srReporter_;
 };
 
 #endif  // LIBDATACHANNEL_APP_PEERCONNECTION_H

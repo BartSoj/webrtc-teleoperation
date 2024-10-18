@@ -112,19 +112,19 @@ public:
      * @brief Gets the local identifier for the teleoperation.
      * @return The local ID.
      */
-    const std::string &getLocalId() const { return localId; }
+    const std::string &getLocalId() const { return localId_; }
 
     /**
      * @brief Gets the RTC configuration used for the teleoperation session.
      * @return The RTC configuration.
      */
-    const rtc::Configuration &getConfig() const { return rtcConfig; }
+    const rtc::Configuration &getConfig() const { return rtcConfig_; }
 
     /**
      * @brief Gets the WebSocket connection used for signaling.
      * @return Shared pointer to the WebSocket connection.
      */
-    std::shared_ptr<rtc::WebSocket> getWebSocket() const { return ws; }
+    std::shared_ptr<rtc::WebSocket> getWebSocket() const { return ws_; }
 
     /**
      * @brief Gets the map of peer connections.
@@ -132,22 +132,22 @@ public:
      */
     const std::unordered_map<std::string, std::shared_ptr<PeerConnection>> &getPeerConnectionMap() const
     {
-        return peerConnectionMap;
+        return peerConnectionMap_;
     }
 
 private:
-    rtc::Configuration rtcConfig;
-    std::string wsUrl;
-    shared_ptr<rtc::WebSocket> ws;
-    std::promise<void> wsPromise;
-    future<void> wsFuture;
-    std::function<void()> onChannelOpenCallback;
-    std::function<void()> onChannelClosedCallback;
-    std::function<void(std::string data)> onChannelMessageCallback;
-    std::function<void(std::string)> onChannelControlMessageCallback;
-    std::string localId;
-    std::unordered_map<std::string, shared_ptr<PeerConnection>> peerConnectionMap;
-    shared_ptr<VideoEncoder> videoEncoder;
+    rtc::Configuration rtcConfig_;
+    std::string wsUrl_;
+    shared_ptr<rtc::WebSocket> ws_;
+    std::promise<void> wsPromise_;
+    future<void> wsFuture_;
+    std::function<void()> onChannelOpenCallback_;
+    std::function<void()> onChannelClosedCallback_;
+    std::function<void(std::string data)> onChannelMessageCallback_;
+    std::function<void(std::string)> onChannelControlMessageCallback_;
+    std::string localId_;
+    std::unordered_map<std::string, shared_ptr<PeerConnection>> peerConnectionMap_;
+    shared_ptr<VideoEncoder> videoEncoder_;
 };
 
 #endif  // LIBDATACHANNEL_APP_TELEOPERATION_H

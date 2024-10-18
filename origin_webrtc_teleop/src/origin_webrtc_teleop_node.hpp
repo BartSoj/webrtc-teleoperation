@@ -22,7 +22,7 @@ private:
      *
      * Broadcasts the video stream.
      */
-    void image_topic_callback(const sensor_msgs::msg::Image &msg) const;
+    void imageTopicCallback(const sensor_msgs::msg::Image &msg) const;
 
     /**
      * @brief Callback function for processing incoming odometry messages.
@@ -30,10 +30,10 @@ private:
      *
      * Broadcasts the odometry data.
      */
-    void odom_topic_callback(const nav_msgs::msg::Odometry &msg) const;
+    void odomTopicCallback(const nav_msgs::msg::Odometry &msg) const;
 
     rclcpp::Subscription<sensor_msgs::msg::Image>::SharedPtr image_subscription_;
     rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odometry_subscription_;
-    std::shared_ptr<Teleoperation> teleoperation;
+    std::shared_ptr<Teleoperation> teleoperation_;
     std::unique_ptr<OriginController> controller_;
 };

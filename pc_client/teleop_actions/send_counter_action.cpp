@@ -7,13 +7,13 @@
 using namespace std::chrono_literals;
 using json = nlohmann::json;
 
-void SendCounterAction::init() { counter = 0; }
+void SendCounterAction::init() { counter_ = 0; }
 
 bool SendCounterAction::loop()
 {
     json logMessage;
     logMessage["type"] = "log";
-    logMessage["message"] = "Counter: " + std::to_string(counter);
+    logMessage["message"] = "Counter: " + std::to_string(counter_);
 
     std::string jsonString = logMessage.dump();
 
@@ -21,8 +21,8 @@ bool SendCounterAction::loop()
     teleoperation->broadcastMessage(jsonString);
 
     std::this_thread::sleep_for(1s);
-    counter++;
+    counter_++;
 
-    if(counter >= 1000) return false;
+    if(counter_ >= 1000) return false;
     return true;
 }

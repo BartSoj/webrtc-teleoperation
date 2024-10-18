@@ -95,11 +95,11 @@ public:
     ~VideoEncoder();
 
 private:
-    int64_t startTime;
-    int frameIndex;
-    AVCodecContext *codecContext;
-    AVFrame *avFrame;
-    AVPacket *avPacket;
+    int64_t startTime_;
+    int frameIndex_;
+    AVCodecContext *codecContext_;
+    AVFrame *avFrame_;
+    AVPacket *avPacket_;
 };
 
 #endif  // LIBDATACHANNEL_APP_VIDEOENCODER_H

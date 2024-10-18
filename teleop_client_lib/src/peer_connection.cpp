@@ -13,7 +13,7 @@ weak_ptr<T> make_weak_ptr(shared_ptr<T> ptr)
 }
 
 PeerConnection::PeerConnection(const Configuration &config)
-    : localId(config.localId), remoteId(config.remoteId), channelCallbacks(config.channelCallbacks)
+    : localId_(config.localId), remoteId_(config.remoteId), channelCallbacks_(config.channelCallbacks)
 {
     auto pc = std::make_shared<rtc::PeerConnection>(config.rtcConfig);
 
@@ -38,10 +38,10 @@ PeerConnection::PeerConnection(const Configuration &config)
     // set handler
     track->setMediaHandler(packetizer);
 
-    this->srReporter = srReporter;
-    this->track = track;
+    this->srReporter_ = srReporter;
+    this->track_ = track;
 
-    this->srReporter->rtpConfig->startTimestamp = timestampMicroToRtp(config.startTime);
+    this->srReporter_->rtpConfig->startTimestamp = timestampMicroToRtp(config.startTime);
 
     pc->onStateChange([](rtc::PeerConnection::State state) { std::cout << "State: " << state << std::endl; });
 
@@ -71,70 +71,70 @@ PeerConnection::PeerConnection(const Configuration &config)
     pc->onDataChannel(
         [this](shared_ptr<rtc::DataChannel> dc)
         {
-            std::cout << "DataChannel from " << this->remoteId << " received with label \"" << dc->label() << "\""
+            std::cout << "DataChannel from " << this->remoteId_ << " received with label \"" << dc->label() << "\""
                       << std::endl;
-            this->dataChannel = dc;
+            this->dataChannel_ = dc;
             configureDataChannel();
         });
 
-    this->rtcPeerConnection = pc;
+    this->rtcPeerConnection_ = pc;
 }
 
 void PeerConnection::setDefaultCallbacks()
 {
-    if(!channelCallbacks.onChannelOpenCallback)
+    if(!channelCallbacks_.onChannelOpenCallback)
     {
-        channelCallbacks.onChannelOpenCallback = [this]()
+        channelCallbacks_.onChannelOpenCallback = [this]()
         {
-            auto wdc = make_weak_ptr(dataChannel);
+            auto wdc = make_weak_ptr(dataChannel_);
 
-            json helloMessage = {{"type", "log"}, {"message", "Hello from " + localId}};
+            json helloMessage = {{"type", "log"}, {"message", "Hello from " + localId_}};
             if(auto dc = wdc.lock()) dc->send(helloMessage.dump());
         };
     }
 
-    if(!channelCallbacks.onChannelClosedCallback)
+    if(!channelCallbacks_.onChannelClosedCallback)
     {
-        channelCallbacks.onChannelClosedCallback = [this]()
-        { std::cout << "DataChannel from " << remoteId << " closed" << std::endl; };
+        channelCallbacks_.onChannelClosedCallback = [this]()
+        { std::cout << "DataChannel from " << remoteId_ << " closed" << std::endl; };
     }
 
-    if(!channelCallbacks.onChannelMessageCallback)
+    if(!channelCallbacks_.onChannelMessageCallback)
     {
-        channelCallbacks.onChannelMessageCallback = [this](auto data)
-        { std::cout << "Message from " << remoteId << " received: " << data << std::endl; };
+        channelCallbacks_.onChannelMessageCallback = [this](auto data)
+        { std::cout << "Message from " << remoteId_ << " received: " << data << std::endl; };
     }
 }
 
 void PeerConnection::configureDataChannel()
 {
-    dataChannel->onOpen(channelCallbacks.onChannelOpenCallback);
-    dataChannel->onClosed(channelCallbacks.onChannelClosedCallback);
-    dataChannel->onMessage(
+    dataChannel_->onOpen(channelCallbacks_.onChannelOpenCallback);
+    dataChannel_->onClosed(channelCallbacks_.onChannelClosedCallback);
+    dataChannel_->onMessage(
         [this](auto data)
         {
             if(std::holds_alternative<std::string>(data))
             {
-                channelCallbacks.onChannelMessageCallback(std::get<std::string>(data));
+                channelCallbacks_.onChannelMessageCallback(std::get<std::string>(data));
             }
         });
 }
 
 void PeerConnection::sendMessage(const std::string &message)
 {
-    if(dataChannel && dataChannel->isOpen()) this->dataChannel->send(message);
+    if(dataChannel_ && dataChannel_->isOpen()) this->dataChannel_->send(message);
 }
 
 void PeerConnection::sendVideoFrame(const std::byte *data, size_t len, int64_t timestampMicro)
 {
-    if(track != nullptr && track->isOpen())
+    if(track_ != nullptr && track_->isOpen())
     {
         auto elapsedTimestamp = timestampMicroToRtp(timestampMicro);
-        srReporter->rtpConfig->timestamp += srReporter->rtpConfig->startTimestamp + elapsedTimestamp;
+        srReporter_->rtpConfig->timestamp += srReporter_->rtpConfig->startTimestamp + elapsedTimestamp;
 
         try
         {
-            track->send(data, len);
+            track_->send(data, len);
         }
         catch(const std::exception &e)
         {
@@ -146,14 +146,14 @@ void PeerConnection::sendVideoFrame(const std::byte *data, size_t len, int64_t t
 uint32_t PeerConnection::timestampMicroToRtp(uint64_t timestampMicro)
 {
     auto seconds = static_cast<double>(timestampMicro) / 1000000.0;
-    return srReporter->rtpConfig->secondsToTimestamp(seconds);
+    return srReporter_->rtpConfig->secondsToTimestamp(seconds);
 }
 
 void PeerConnection::createDataChannel()
 {
-    dataChannel = rtcPeerConnection->createDataChannel("test");
+    dataChannel_ = rtcPeerConnection_->createDataChannel("test");
     configureDataChannel();
-    rtcPeerConnection->setLocalDescription();
+    rtcPeerConnection_->setLocalDescription();
 }
 
 void PeerConnection::handleConnectionMessage(const nlohmann::json &message)
@@ -166,25 +166,25 @@ void PeerConnection::handleConnectionMessage(const nlohmann::json &message)
     if(type == "offer")
     {
         auto sdp = message["description"].get<std::string>();
-        rtcPeerConnection->setRemoteDescription(rtc::Description(sdp, type));
-        rtcPeerConnection->setLocalDescription();
+        rtcPeerConnection_->setRemoteDescription(rtc::Description(sdp, type));
+        rtcPeerConnection_->setLocalDescription();
     }
     else if(type == "answer")
     {
         auto sdp = message["description"].get<std::string>();
-        rtcPeerConnection->setRemoteDescription(rtc::Description(sdp, type));
+        rtcPeerConnection_->setRemoteDescription(rtc::Description(sdp, type));
     }
     else if(type == "candidate")
     {
         auto sdp = message["candidate"].get<std::string>();
         auto mid = message["mid"].get<std::string>();
-        rtcPeerConnection->addRemoteCandidate(rtc::Candidate(sdp, mid));
+        rtcPeerConnection_->addRemoteCandidate(rtc::Candidate(sdp, mid));
     }
 }
 
 PeerConnection::~PeerConnection()
 {
-    track->close();
-    dataChannel->close();
-    rtcPeerConnection->close();
+    track_->close();
+    dataChannel_->close();
+    rtcPeerConnection_->close();
 }
