@@ -3,6 +3,7 @@
 
 #include <rclcpp/rclcpp.hpp>
 #include <geometry_msgs/msg/twist.hpp>
+#include "origin_msgs/msg/control_mode.hpp"
 #include "origin_msgs/srv/set_control_mode.hpp"
 #include "origin_msgs/srv/return_control_mode.hpp"
 #include <atomic>
@@ -27,10 +28,12 @@ public:
 private:
     rclcpp::Node::SharedPtr node_;
     rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr cmd_vel_publisher_;
+    rclcpp::Subscription<origin_msgs::msg::ControlMode>::SharedPtr control_mode_subscription_;
     rclcpp::Client<origin_msgs::srv::SetControlMode>::SharedPtr set_control_mode_client_;
     rclcpp::Client<origin_msgs::srv::ReturnControlMode>::SharedPtr reset_control_mode_client_;
     rclcpp::Client<origin_msgs::srv::ReturnControlMode>::SharedPtr previous_control_mode_client_;
     std::atomic<bool> changing_control_mode_{false};
+    std::atomic<uint8> control_mode_{0};
 
     /**
      * @brief Requests control mode change to user control.
@@ -52,6 +55,14 @@ private:
      * This function sends a service request to return to the previous control mode.
      */
     void previousControl();
+
+    /**
+     * @brief Updates current control mode.
+     * @param msg The Origin control mode message.
+     *
+     * Sets the current control mode to the one received from message.
+     */
+    void controlModeTopicCallback(const origin_msgs::msg::ControlMode &msg) const;
 
     /**
      * @brief Publishes velocity commands.

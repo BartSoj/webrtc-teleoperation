@@ -1,9 +1,13 @@
 #include "OriginController.hpp"
 
+using std::placeholders::_1;
+
 OriginController::OriginController(rclcpp::Node::SharedPtr node)
     : node_(node)
 {
     cmd_vel_publisher_ = node_->create_publisher<geometry_msgs::msg::Twist>("/robot/cmd_vel_user", 10);
+    control_mode_subscription_ = node_->create_subscription<origin_msgs::msg::ControlMode>(
+        "/robot/cmd_vel_controller/control_mode", 10, std::bind(&OriginController::controlModeTopicCallback, this, _1));
     set_control_mode_client_ = node_->create_client<origin_msgs::srv::SetControlMode>("/robot/cmd_vel_controller/set_control_mode");
     reset_control_mode_client_ = node_->create_client<origin_msgs::srv::ReturnControlMode>("/robot/cmd_vel_controller/reset_control_mode");
     previous_control_mode_client_ = node_->create_client<origin_msgs::srv::ReturnControlMode>("/robot/cmd_vel_controller/previous_control_mode");
@@ -34,7 +38,7 @@ void OriginController::handleControlMessage(const std::string& message)
 void OriginController::requestControl()
 {
     auto request = std::make_shared<origin_msgs::srv::SetControlMode::Request>();
-    request->mode.mode = 30;  // 30 is the mode for user control
+    request->mode.mode = origin_msgs::msg::ControlMode::USER;
 
     while (!set_control_mode_client_->wait_for_service(std::chrono::seconds(1))) {
         if (!rclcpp::ok()) {
@@ -45,13 +49,13 @@ void OriginController::requestControl()
     }
 
     auto result_future = set_control_mode_client_->async_send_request(request,
-        std::bind(&OriginController::handleSetControlModeResponse, this, std::placeholders::_1));
+        std::bind(&OriginController::handleSetControlModeResponse, this, _1));
 }
 
 void OriginController::resetControl()
 {
     auto request = std::make_shared<origin_msgs::srv::ReturnControlMode::Request>();
-    request->mode_from.mode = 30;
+    request->mode_from.mode = control_mode_.load();;
 
     while (!reset_control_mode_client_->wait_for_service(std::chrono::seconds(1))) {
         if (!rclcpp::ok()) {
@@ -62,13 +66,13 @@ void OriginController::resetControl()
     }
 
     auto result_future = reset_control_mode_client_->async_send_request(request,
-        std::bind(&OriginController::handleReturnControlModeResponse, this, std::placeholders::_1));
+        std::bind(&OriginController::handleReturnControlModeResponse, this, _1));
 }
 
 void OriginController::previousControl()
 {
     auto request = std::make_shared<origin_msgs::srv::ReturnControlMode::Request>();
-    request->mode_from.mode = 30;
+    request->mode_from.mode = control_mode_.load();
 
     while (!previous_control_mode_client_->wait_for_service(std::chrono::seconds(1))) {
         if (!rclcpp::ok()) {
@@ -79,7 +83,7 @@ void OriginController::previousControl()
     }
 
     auto result_future = previous_control_mode_client_->async_send_request(request,
-        std::bind(&OriginController::handleReturnControlModeResponse, this, std::placeholders::_1));}
+        std::bind(&OriginController::handleReturnControlModeResponse, this, _1));}
 
 void OriginController::handleSetControlModeResponse(rclcpp::Client<origin_msgs::srv::SetControlMode>::SharedFuture future)
 {
@@ -106,4 +110,10 @@ void OriginController::publishVelocity(const nlohmann::json& control_message)
     twist_msg.angular.z = control_message["rotation"];
 
     cmd_vel_publisher_->publish(twist_msg);
+}
+
+void OriginController::controlModeTopicCallback(const origin_msgs::msg::ControlMode &msg) const
+{
+    RCLCPP_INFO(node_->get_logger(), "Control mode: '%d'", msg.mode);
+    control_mode_.store(msg.mode);
 }
