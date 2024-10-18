@@ -11,6 +11,8 @@
 
 class OriginController {
 public:
+    static constexpr double MAX_VELOCITY = 2.0;
+
     /**
      * @brief Constructor for OriginController for controlling robot using commands.
      * @param node Shared pointer to the ROS node for creating publishers and clients.

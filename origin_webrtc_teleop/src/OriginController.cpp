@@ -122,15 +122,26 @@ void OriginController::handleReturnControlModeResponse(rclcpp::Client<origin_msg
 
 void OriginController::publishVelocity(const nlohmann::json& control_message)
 {
-    geometry_msgs::msg::Twist twist_msg;
-    twist_msg.linear.x = control_message["forward"];
-    twist_msg.linear.y = 0;
-    twist_msg.linear.z = 0;
-    twist_msg.angular.x = 0;
-    twist_msg.angular.y = 0;
-    twist_msg.angular.z = control_message["rotation"];
+    double forward = control_message["forward"];
+    double rotation = control_message["rotation"];
 
-    cmd_vel_publisher_->publish(twist_msg);
+    if (forward >= -MAX_VELOCITY && forward <= MAX_VELOCITY &&
+        rotation >= -MAX_VELOCITY && rotation <= MAX_VELOCITY)
+    {
+        geometry_msgs::msg::Twist twist_msg;
+        twist_msg.linear.x = forward;
+        twist_msg.linear.y = 0;
+        twist_msg.linear.z = 0;
+        twist_msg.angular.x = 0;
+        twist_msg.angular.y = 0;
+        twist_msg.angular.z = rotation;
+
+        cmd_vel_publisher_->publish(twist_msg);
+    }
+    else
+    {
+        RCLCPP_WARN(node_->get_logger(), "Velocity values out of bounds: forward = %f, rotation = %f", forward, rotation);
+    }
 }
 
 void OriginController::controlModeTopicCallback(const origin_msgs::msg::ControlMode &msg) const
