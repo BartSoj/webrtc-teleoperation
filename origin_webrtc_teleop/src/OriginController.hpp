@@ -35,7 +35,7 @@ private:
     rclcpp::Client<origin_msgs::srv::ReturnControlMode>::SharedPtr reset_control_mode_client_;
     rclcpp::Client<origin_msgs::srv::ReturnControlMode>::SharedPtr previous_control_mode_client_;
     std::atomic<bool> changing_control_mode_{false};
-    std::atomic<uint8> control_mode_{0};
+    std::atomic<uint8_t> control_mode_{0};
 
     /**
      * @brief Requests control mode change to user control.
@@ -64,7 +64,7 @@ private:
      *
      * Sets the current control mode to the one received from message.
      */
-    void controlModeTopicCallback(const origin_msgs::msg::ControlMode &msg) const;
+    void controlModeTopicCallback(const origin_msgs::msg::ControlMode &msg);
 
     /**
      * @brief Publishes velocity commands.

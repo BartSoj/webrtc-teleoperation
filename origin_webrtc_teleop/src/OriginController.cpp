@@ -144,7 +144,7 @@ void OriginController::publishVelocity(const nlohmann::json& control_message)
     }
 }
 
-void OriginController::controlModeTopicCallback(const origin_msgs::msg::ControlMode &msg) const
+void OriginController::controlModeTopicCallback(const origin_msgs::msg::ControlMode &msg)
 {
     RCLCPP_INFO(node_->get_logger(), "Control mode: '%d'", msg.mode);
     control_mode_.store(msg.mode);
