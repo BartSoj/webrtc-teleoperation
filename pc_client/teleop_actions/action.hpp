@@ -1,5 +1,4 @@
-#ifndef LIBDATACHANNEL_APP_ACTION_H
-#define LIBDATACHANNEL_APP_ACTION_H
+#pragma once
 
 #include "teleop_client/teleoperation.hpp"
 
@@ -19,5 +18,3 @@ protected:
 
     shared_ptr<Teleoperation> teleoperation;
 };
-
-#endif  // LIBDATACHANNEL_APP_ACTION_H

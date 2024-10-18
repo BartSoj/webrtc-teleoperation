@@ -1,5 +1,4 @@
-#ifndef LIBDATACHANNEL_APP_SENDCOUNTERACTION_H
-#define LIBDATACHANNEL_APP_SENDCOUNTERACTION_H
+#pragma once
 
 #include "action.hpp"
 
@@ -16,5 +15,3 @@ protected:
 private:
     int counter_;
 };
-
-#endif  // LIBDATACHANNEL_APP_SENDCOUNTERACTION_H

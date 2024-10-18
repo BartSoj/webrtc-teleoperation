@@ -1,5 +1,4 @@
-#ifndef LIBDATACHANNEL_APP_ADDCLIENTS_H
-#define LIBDATACHANNEL_APP_ADDCLIENTS_H
+#pragma once
 
 #include "action.hpp"
 
@@ -11,5 +10,3 @@ public:
 protected:
     bool loop() override;
 };
-
-#endif  // LIBDATACHANNEL_APP_ADDCLIENTS_H

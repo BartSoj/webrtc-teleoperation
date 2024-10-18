@@ -1,5 +1,4 @@
-#ifndef TELEOP_CONFIG_PARSER_HPP
-#define TELEOP_CONFIG_PARSER_HPP
+#pragma once
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -65,5 +64,3 @@ private:
     template <typename T>
     T getParameter(const std::string& name, const T& default_value);
 };
-
-#endif  // TELEOP_CONFIG_PARSER_HPP

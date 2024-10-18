@@ -1,5 +1,4 @@
-#ifndef LIBDATACHANNEL_APP_STREAMVIDEOCVACTION_H
-#define LIBDATACHANNEL_APP_STREAMVIDEOCVACTION_H
+#pragma once
 
 #include <fstream>
 #include <opencv2/opencv.hpp>
@@ -20,5 +19,3 @@ protected:
 
     cv::VideoCapture cap;
 };
-
-#endif  // LIBDATACHANNEL_APP_STREAMVIDEOCVACTION_H

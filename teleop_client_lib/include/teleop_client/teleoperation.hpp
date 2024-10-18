@@ -1,17 +1,16 @@
-#ifndef LIBDATACHANNEL_APP_TELEOPERATION_H
-#define LIBDATACHANNEL_APP_TELEOPERATION_H
+#pragma once
 
 #include <future>
 #include <iostream>
 #include <memory>
+#include <rtc/rtc.hpp>
 #include <stdexcept>
 #include <unordered_map>
 #include <utility>
 
-#include "video_encoder.hpp"
 #include "nlohmann/json.hpp"
 #include "peer_connection.hpp"
-#include "rtc/rtc.hpp"
+#include "video_encoder.hpp"
 
 using std::future;
 using std::shared_ptr;
@@ -149,5 +148,3 @@ private:
     std::unordered_map<std::string, shared_ptr<PeerConnection>> peerConnectionMap_;
     shared_ptr<VideoEncoder> videoEncoder_;
 };
-
-#endif  // LIBDATACHANNEL_APP_TELEOPERATION_H

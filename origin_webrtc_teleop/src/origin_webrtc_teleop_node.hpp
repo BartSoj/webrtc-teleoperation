@@ -1,7 +1,10 @@
-#include "nav_msgs/msg/odometry.hpp"
+#pragma once
+
+#include <nav_msgs/msg/odometry.hpp>
+#include <rclcpp/rclcpp.hpp>
+#include <sensor_msgs/msg/image.hpp>
+
 #include "origin_controller.hpp"
-#include "rclcpp/rclcpp.hpp"
-#include "sensor_msgs/msg/image.hpp"
 #include "teleop_client/teleoperation.hpp"
 
 class OriginWebrtcTeleopNode : public rclcpp::Node

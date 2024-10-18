@@ -1,5 +1,4 @@
-#ifndef LIBDATACHANNEL_APP_VIDEOENCODER_H
-#define LIBDATACHANNEL_APP_VIDEOENCODER_H
+#pragma once
 
 #include <map>
 #include <string>
@@ -101,5 +100,3 @@ private:
     AVFrame *avFrame_;
     AVPacket *avPacket_;
 };
-
-#endif  // LIBDATACHANNEL_APP_VIDEOENCODER_H

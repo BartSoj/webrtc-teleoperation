@@ -1,5 +1,4 @@
-#ifndef LIBDATACHANNEL_APP_STREAMVIDEOACTION_H
-#define LIBDATACHANNEL_APP_STREAMVIDEOACTION_H
+#pragma once
 
 #include "action.hpp"
 
@@ -21,5 +20,3 @@ protected:
     char buffer[BUFFER_SIZE];
     long int len;
 };
-
-#endif  // LIBDATACHANNEL_APP_STREAMVIDEOACTION_H

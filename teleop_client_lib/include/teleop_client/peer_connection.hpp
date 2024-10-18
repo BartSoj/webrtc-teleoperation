@@ -1,12 +1,11 @@
-#ifndef LIBDATACHANNEL_APP_PEERCONNECTION_H
-#define LIBDATACHANNEL_APP_PEERCONNECTION_H
+#pragma once
 
 #include <cstddef>
 #include <iostream>
 #include <memory>
+#include <rtc/rtc.hpp>
 
 #include "nlohmann/json.hpp"
-#include "rtc/rtc.hpp"
 
 using namespace std::chrono_literals;
 using nlohmann::json;
@@ -86,5 +85,3 @@ private:
     shared_ptr<rtc::Track> track_;
     shared_ptr<rtc::RtcpSrReporter> srReporter_;
 };
-
-#endif  // LIBDATACHANNEL_APP_PEERCONNECTION_H
