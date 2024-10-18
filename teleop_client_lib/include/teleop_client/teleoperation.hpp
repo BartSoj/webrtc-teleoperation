@@ -8,9 +8,9 @@
 #include <unordered_map>
 #include <utility>
 
-#include "PeerConnection.hpp"
-#include "VideoEncoder.hpp"
+#include "video_encoder.hpp"
 #include "nlohmann/json.hpp"
+#include "peer_connection.hpp"
 #include "rtc/rtc.hpp"
 
 using std::future;

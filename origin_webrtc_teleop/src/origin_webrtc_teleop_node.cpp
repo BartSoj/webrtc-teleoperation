@@ -3,7 +3,7 @@
 #include <memory>
 #include <nlohmann/json.hpp>
 
-#include "TeleopConfigParser.hpp"
+#include "teleop_config_parser.hpp"
 
 using nlohmann::json;
 using std::placeholders::_1;

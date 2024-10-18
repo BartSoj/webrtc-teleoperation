@@ -1,7 +1,7 @@
 #ifndef LIBDATACHANNEL_APP_STREAMVIDEOACTION_H
 #define LIBDATACHANNEL_APP_STREAMVIDEOACTION_H
 
-#include "Action.hpp"
+#include "action.hpp"
 
 typedef int SOCKET;
 

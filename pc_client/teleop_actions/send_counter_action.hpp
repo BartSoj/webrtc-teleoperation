@@ -1,7 +1,7 @@
 #ifndef LIBDATACHANNEL_APP_SENDCOUNTERACTION_H
 #define LIBDATACHANNEL_APP_SENDCOUNTERACTION_H
 
-#include "Action.hpp"
+#include "action.hpp"
 
 class SendCounterAction : public Action
 {

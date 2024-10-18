@@ -3,8 +3,8 @@
 
 #include <rclcpp/rclcpp.hpp>
 
-#include "teleop_client/Teleoperation.hpp"
-#include "teleop_client/VideoEncoder.hpp"
+#include "teleop_client/video_encoder.hpp"
+#include "teleop_client/teleoperation.hpp"
 
 class TeleopConfigParser
 {

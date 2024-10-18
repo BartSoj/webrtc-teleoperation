@@ -11,11 +11,11 @@ add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../teleop_client_lib
 
 add_executable(libdatachannel_app
         main.cpp
-        teleop_actions/Action.cpp
-        teleop_actions/SendCounterAction.cpp
-        teleop_actions/AddClientsAction.cpp
-        teleop_actions/StreamVideoAction.cpp
-        teleop_actions/StreamVideoCvAction.cpp
+        teleop_actions/action.cpp
+        teleop_actions/send_counter_action.cpp
+        teleop_actions/add_clients_action.cpp
+        teleop_actions/stream_video_action.cpp
+        teleop_actions/stream_video_cv_action.cpp
 )
 
 target_link_libraries(pc_client

@@ -1,7 +1,7 @@
 #ifndef LIBDATACHANNEL_APP_ADDCLIENTS_H
 #define LIBDATACHANNEL_APP_ADDCLIENTS_H
 
-#include "Action.hpp"
+#include "action.hpp"
 
 class AddClientsAction : public Action
 {

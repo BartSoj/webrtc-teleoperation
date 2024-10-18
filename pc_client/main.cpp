@@ -1,12 +1,12 @@
 #include <iostream>
 #include <stdexcept>
 
-#include "../origin_webrtc_teleop/src/teleop_client/Teleoperation.hpp"
-#include "teleop_actions/Action.hpp"
-#include "teleop_actions/AddClientsAction.hpp"
-#include "teleop_actions/SendCounterAction.hpp"
-#include "teleop_actions/StreamVideoAction.hpp"
-#include "teleop_actions/StreamVideoCvAction.hpp"
+#include "teleop_actions/action.hpp"
+#include "teleop_actions/add_clients_action.hpp"
+#include "teleop_actions/send_counter_action.hpp"
+#include "teleop_actions/stream_video_action.hpp"
+#include "teleop_actions/stream_video_cv_action.hpp"
+#include "teleop_client/teleoperation.hpp"
 
 int main(int argc, char **argv)
 try

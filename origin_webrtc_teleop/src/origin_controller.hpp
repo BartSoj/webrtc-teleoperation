@@ -1,15 +1,17 @@
 #ifndef ORIGIN_CONTROLLER_HPP
 #define ORIGIN_CONTROLLER_HPP
 
-#include <rclcpp/rclcpp.hpp>
-#include <geometry_msgs/msg/twist.hpp>
-#include "origin_msgs/msg/control_mode.hpp"
-#include "origin_msgs/srv/set_control_mode.hpp"
-#include "origin_msgs/srv/return_control_mode.hpp"
 #include <atomic>
+#include <geometry_msgs/msg/twist.hpp>
 #include <nlohmann/json.hpp>
+#include <rclcpp/rclcpp.hpp>
 
-class OriginController {
+#include "origin_msgs/msg/control_mode.hpp"
+#include "origin_msgs/srv/return_control_mode.hpp"
+#include "origin_msgs/srv/set_control_mode.hpp"
+
+class OriginController
+{
 public:
     static constexpr double MAX_VELOCITY = 2.0;
 
@@ -35,7 +37,7 @@ private:
     rclcpp::Client<origin_msgs::srv::ReturnControlMode>::SharedPtr reset_control_mode_client_;
     rclcpp::Client<origin_msgs::srv::ReturnControlMode>::SharedPtr previous_control_mode_client_;
     std::atomic<bool> changing_control_mode_{false};
-    std::atomic<uint8_t> control_mode_{0};
+    std::atomic<uint8> control_mode_{0};
 
     /**
      * @brief Requests control mode change to user control.
@@ -64,7 +66,7 @@ private:
      *
      * Sets the current control mode to the one received from message.
      */
-    void controlModeTopicCallback(const origin_msgs::msg::ControlMode &msg);
+    void controlModeTopicCallback(const origin_msgs::msg::ControlMode& msg) const;
 
     /**
      * @brief Publishes velocity commands.
@@ -79,4 +81,4 @@ private:
     void handleReturnControlModeResponse(rclcpp::Client<origin_msgs::srv::ReturnControlMode>::SharedFuture future);
 };
 
-#endif // ORIGIN_CONTROLLER_HPP
+#endif  // ORIGIN_CONTROLLER_HPP

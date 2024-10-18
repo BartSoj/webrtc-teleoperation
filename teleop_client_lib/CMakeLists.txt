@@ -17,9 +17,9 @@ pkg_check_modules(FFMPEG REQUIRED IMPORTED_TARGET
 )
 
 add_library(teleop_client_lib
-        src/PeerConnection.cpp
-        src/Teleoperation.cpp
-        src/VideoEncoder.cpp
+        src/peer_connection.cpp
+        src/teleoperation.cpp
+        src/video_encoder.cpp
 )
 
 target_include_directories(teleop_client_lib PUBLIC

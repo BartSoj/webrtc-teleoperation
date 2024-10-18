@@ -1,4 +1,4 @@
-#include "StreamVideoCvAction.hpp"
+#include "stream_video_cv_action.hpp"
 
 #include <iostream>
 #include <opencv2/opencv.hpp>

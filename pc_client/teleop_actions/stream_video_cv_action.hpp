@@ -4,7 +4,7 @@
 #include <fstream>
 #include <opencv2/opencv.hpp>
 
-#include "Action.hpp"
+#include "action.hpp"
 
 class StreamVideoCvAction : public Action
 {

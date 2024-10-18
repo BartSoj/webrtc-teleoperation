@@ -20,8 +20,8 @@ add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../teleop_client_lib
 add_executable(${PROJECT_NAME}
         src/origin_webrtc_teleop_node_main.cpp
         src/origin_webrtc_teleop_node.cpp
-        src/TeleopConfigParser.cpp
-        src/OriginController.cpp
+        src/teleop_config_parser.cpp
+        src/origin_controller.cpp
 )
 
 ament_target_dependencies(${PROJECT_NAME}
