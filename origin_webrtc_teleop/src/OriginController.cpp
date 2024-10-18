@@ -43,6 +43,7 @@ void OriginController::requestControl()
     while (!set_control_mode_client_->wait_for_service(std::chrono::seconds(1))) {
         if (!rclcpp::ok()) {
             RCLCPP_ERROR(node_->get_logger(), "Interrupted while waiting for the service. Exiting.");
+            changing_control_mode_.store(false);
             return;
         }
         RCLCPP_INFO(node_->get_logger(), "Service not available, waiting again...");
@@ -60,6 +61,7 @@ void OriginController::resetControl()
     while (!reset_control_mode_client_->wait_for_service(std::chrono::seconds(1))) {
         if (!rclcpp::ok()) {
             RCLCPP_ERROR(node_->get_logger(), "Interrupted while waiting for the service. Exiting.");
+            changing_control_mode_.store(false);
             return;
         }
         RCLCPP_INFO(node_->get_logger(), "Service not available, waiting again...");
@@ -77,6 +79,7 @@ void OriginController::previousControl()
     while (!previous_control_mode_client_->wait_for_service(std::chrono::seconds(1))) {
         if (!rclcpp::ok()) {
             RCLCPP_ERROR(node_->get_logger(), "Interrupted while waiting for the service. Exiting.");
+            changing_control_mode_.store(false);
             return;
         }
         RCLCPP_INFO(node_->get_logger(), "Service not available, waiting again...");
@@ -87,16 +90,34 @@ void OriginController::previousControl()
 
 void OriginController::handleSetControlModeResponse(rclcpp::Client<origin_msgs::srv::SetControlMode>::SharedFuture future)
 {
-    auto result = future.get();
     changing_control_mode_.store(false);
-    RCLCPP_INFO(node_->get_logger(), "Set control mode service call completed");
+
+    if (future.valid()) {
+        auto result = future.get();
+        if (result->success) {
+            RCLCPP_INFO(node_->get_logger(), "Set control mode service call completed successfully");
+        } else {
+            RCLCPP_ERROR(node_->get_logger(), "Set control mode service call failed: %s", result->message.c_str());
+        }
+    } else {
+        RCLCPP_ERROR(node_->get_logger(), "Set control mode service call failed");
+    }
 }
 
 void OriginController::handleReturnControlModeResponse(rclcpp::Client<origin_msgs::srv::ReturnControlMode>::SharedFuture future)
 {
-    auto result = future.get();
     changing_control_mode_.store(false);
-    RCLCPP_INFO(node_->get_logger(), "Return control mode service call completed");
+
+    if (future.valid()) {
+        auto result = future.get();
+        if (result->success) {
+            RCLCPP_INFO(node_->get_logger(), "Return control mode service call completed successfully");
+        } else {
+            RCLCPP_ERROR(node_->get_logger(), "Return control mode service call failed: %s", result->message.c_str());
+        }
+    } else {
+        RCLCPP_ERROR(node_->get_logger(), "Return control mode service call failed");
+    }
 }
 
 void OriginController::publishVelocity(const nlohmann::json& control_message)
