@@ -37,13 +37,52 @@ void OriginWebrtcTeleopNode::startTeleoperation()
 
     teleoperation_->onChannelClosed([this]() { RCLCPP_INFO(this->get_logger(), "Channel close"); });
 
-    teleoperation_->onChannelMessage([this](const std::string &message)
-                                     { RCLCPP_INFO(this->get_logger(), "Message: '%s'", message.c_str()); });
+    teleoperation_->onChannelMessage(
+        [this](const std::string &message)
+        {
+            try
+            {
+                json message_json = json::parse(message);
+                if(message_json["type"] == "log")
+                {
+                    teleoperation_->broadcastMessage(message);
+                }
+                else
+                {
+                    RCLCPP_ERROR(this->get_logger(), "Unknown message type: %s",
+                                 message_json["type"].get<std::string>());
+                }
+            }
+            catch(const std::exception &e)
+            {
+                RCLCPP_ERROR(this->get_logger(), "Error handling message: %s", e.what());
+            }
+        });
 
     teleoperation_->onChannelControlMessage(
         [this](const std::string &message)
         {
-            controller_->handleControlMessage(message);
+            try
+            {
+                json message_json = json::parse(message);
+                if(message_json["type"] == "control")
+                {
+                    controller_->handleControlMessage(message_json);
+                }
+                else if(message_json["type"] == "log")
+                {
+                    teleoperation_->broadcastMessage(message);
+                }
+                else
+                {
+                    RCLCPP_ERROR(this->get_logger(), "Unknown message type: %s",
+                                 message_json["type"].get<std::string>());
+                }
+            }
+            catch(const std::exception &e)
+            {
+                RCLCPP_ERROR(this->get_logger(), "Error handling control message: %s", e.what());
+            }
         });
 
     teleoperation_->startSignaling();

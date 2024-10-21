@@ -15,34 +15,24 @@ OriginController::OriginController(rclcpp::Node::SharedPtr node) : node_(node)
         node_->create_client<origin_msgs::srv::ReturnControlMode>("/robot/cmd_vel_controller/previous_control_mode");
 }
 
-void OriginController::handleControlMessage(const std::string& message)
+void OriginController::handleControlMessage(const nlohmann::json& control_message)
 {
-    try
+    if(control_message["type"] == "control")
     {
-        nlohmann::json control_message = nlohmann::json::parse(message);
-        if(control_message["type"] == "control")
+        if(bool expected = false;
+           control_message["reset_control"] && changing_control_mode_.compare_exchange_strong(expected, true))
         {
-            bool expected = false;
-            if(control_message["reset_control"] && changing_control_mode_.compare_exchange_strong(expected, true))
-            {
-                resetControl();
-            }
-            else if(control_message["previous_control"] &&
-                    changing_control_mode_.compare_exchange_strong(expected, true))
-            {
-                previousControl();
-            }
-            else if(control_message["request_control"] &&
-                    changing_control_mode_.compare_exchange_strong(expected, true))
-            {
-                requestControl();
-            }
-            publishVelocity(control_message);
+            resetControl();
         }
-    }
-    catch(const std::exception& e)
-    {
-        RCLCPP_ERROR(node_->get_logger(), "Error handling control message: %s", e.what());
+        else if(control_message["previous_control"] && changing_control_mode_.compare_exchange_strong(expected, true))
+        {
+            previousControl();
+        }
+        else if(control_message["request_control"] && changing_control_mode_.compare_exchange_strong(expected, true))
+        {
+            requestControl();
+        }
+        publishVelocity(control_message);
     }
 }
 

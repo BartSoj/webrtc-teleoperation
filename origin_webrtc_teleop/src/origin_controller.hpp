@@ -21,11 +21,11 @@ public:
 
     /**
      * @brief Handles incoming control messages.
-     * @param message JSON-formatted string containing control commands.
+     * @param control_message JSON object containing control commands.
      *
      * This function parses the incoming message and calls the appropriate functions to control the robot.
      */
-    void handleControlMessage(const std::string& message);
+    void handleControlMessage(const nlohmann::json& control_message);
 
 private:
     rclcpp::Node::SharedPtr node_;
