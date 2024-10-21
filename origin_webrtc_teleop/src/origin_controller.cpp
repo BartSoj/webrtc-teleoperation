@@ -6,7 +6,7 @@ OriginController::OriginController(rclcpp::Node::SharedPtr node) : node_(node)
 {
     cmd_vel_publisher_ = node_->create_publisher<geometry_msgs::msg::Twist>("/robot/cmd_vel_user", 10);
     control_mode_subscription_ = node_->create_subscription<origin_msgs::msg::ControlMode>(
-        "/robot/cmd_vel_controller/control_mode", 10, std::bind(&OriginController::controlModeTopicCallback, this, _1));
+        "/robot/control_mode", 10, std::bind(&OriginController::controlModeTopicCallback, this, _1));
     set_control_mode_client_ =
         node_->create_client<origin_msgs::srv::SetControlMode>("/robot/cmd_vel_controller/set_control_mode");
     reset_control_mode_client_ =
@@ -179,6 +179,5 @@ void OriginController::publishVelocity(const nlohmann::json& control_message)
 
 void OriginController::controlModeTopicCallback(const origin_msgs::msg::ControlMode& msg)
 {
-    RCLCPP_INFO(node_->get_logger(), "Control mode: '%d'", msg.mode);
     control_mode_.store(msg.mode);
 }

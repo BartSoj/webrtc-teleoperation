@@ -16,6 +16,13 @@ OriginWebrtcTeleopNode::OriginWebrtcTeleopNode(const rclcpp::NodeOptions &option
 
     odometry_subscription_ = this->create_subscription<nav_msgs::msg::Odometry>(
         "/robot/odom", 10, std::bind(&OriginWebrtcTeleopNode::odomTopicCallback, this, _1));
+
+    battery_info_subscription_ = this->create_subscription<origin_msgs::msg::BatteryInfo>(
+        "/robot/battery/info", 10, std::bind(&OriginWebrtcTeleopNode::batteryInfoTopicCallback, this, _1));
+
+    network_telemetry_subscription_ = this->create_subscription<origin_msgs::msg::NetworkTelemetry>(
+        "/robot/origin_network_telemetry/network", 10,
+        std::bind(&OriginWebrtcTeleopNode::networkTelemetryTopicCallback, this, _1));
 }
 
 void OriginWebrtcTeleopNode::startTeleoperation()
@@ -31,12 +38,11 @@ void OriginWebrtcTeleopNode::startTeleoperation()
     teleoperation_->onChannelClosed([this]() { RCLCPP_INFO(this->get_logger(), "Channel close"); });
 
     teleoperation_->onChannelMessage([this](const std::string &message)
-                                    { RCLCPP_INFO(this->get_logger(), "Message: '%s'", message.c_str()); });
+                                     { RCLCPP_INFO(this->get_logger(), "Message: '%s'", message.c_str()); });
 
     teleoperation_->onChannelControlMessage(
         [this](const std::string &message)
         {
-            RCLCPP_INFO(this->get_logger(), "Control message: '%s'", message.c_str());
             controller_->handleControlMessage(message);
         });
 
@@ -45,14 +51,11 @@ void OriginWebrtcTeleopNode::startTeleoperation()
 
 void OriginWebrtcTeleopNode::imageTopicCallback(const sensor_msgs::msg::Image &msg) const
 {
-    RCLCPP_INFO(this->get_logger(), "Image: '%s'", msg.header.frame_id.c_str());
     teleoperation_->broadcastVideoFrame(msg.data.data(), msg.width, msg.height, static_cast<int>(msg.step));
 }
 
 void OriginWebrtcTeleopNode::odomTopicCallback(const nav_msgs::msg::Odometry &msg) const
 {
-    RCLCPP_INFO(this->get_logger(), "Odometry: '%s'", msg.header.frame_id.c_str());
-
     json odometry_data = {
         {"type", "odometry"},
         {"odometry",
@@ -69,4 +72,21 @@ void OriginWebrtcTeleopNode::odomTopicCallback(const nav_msgs::msg::Odometry &ms
            {{"x", msg.twist.twist.angular.x}, {"y", msg.twist.twist.angular.y}, {"z", msg.twist.twist.angular.z}}}}}};
 
     teleoperation_->broadcastMessage(odometry_data.dump());
+}
+
+void OriginWebrtcTeleopNode::batteryInfoTopicCallback(const origin_msgs::msg::BatteryInfo &msg) const
+{
+    json battery_data = {{"type", "battery"},
+                         {"battery", {{"voltage", msg.voltage}, {"state_of_charge", msg.state_of_charge}}}};
+
+    teleoperation_->broadcastMessage(battery_data.dump());
+}
+
+void OriginWebrtcTeleopNode::networkTelemetryTopicCallback(const origin_msgs::msg::NetworkTelemetry &msg) const
+{
+    json network_telemetry_data = {
+        {"type", "network"},
+        {"network", {{"cellular_strength", msg.cellular_strength}, {"wifi_strength", msg.wifi_strength}}}};
+
+    teleoperation_->broadcastMessage(network_telemetry_data.dump());
 }
