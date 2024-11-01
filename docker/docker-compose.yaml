@@ -12,5 +12,3 @@ services:
     privileged: true
     network_mode: host
     ipc: host
-    volumes:
-      - /data/app/avular/dds:/dds

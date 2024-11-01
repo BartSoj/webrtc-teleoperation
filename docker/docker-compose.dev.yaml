@@ -13,5 +13,4 @@ services:
     network_mode: host
     ipc: host
     volumes:
-      - /data/app/avular/dds:/dds
       - /dev/bus/usb:/dev/bus/usb
