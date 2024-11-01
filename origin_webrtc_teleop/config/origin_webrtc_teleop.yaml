@@ -1,17 +1,19 @@
 origin_webrtc_teleop:
   ros__parameters:
     local_id: "origin"
-    hostname: "127.0.0.1"
+    hostname: "192.168.192.71"
     port: "8000"
     stun_server: "stun:stun.l.google.com:19302"
     video_encoder:
       bit_rate: 1000000
       width: 640
       height: 480
-      framerate: 30
-      gop_size: 10
+      framerate: 6
+      gop_size: 6
       max_b_frames: 0
-      refs: 1
+      refs: 3
       options:
+        profile: "baseline"
         preset: "ultrafast"
         tune: "zerolatency"
+        level: "3.1"

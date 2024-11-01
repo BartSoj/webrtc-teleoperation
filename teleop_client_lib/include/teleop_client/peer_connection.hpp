@@ -2,7 +2,6 @@
 
 #include <cstddef>
 #include <iostream>
-#include <memory>
 #include <rtc/rtc.hpp>
 
 #include "nlohmann/json.hpp"
@@ -39,13 +38,13 @@ public:
      * @brief Creates a WebRTC peer connection, sets up the video track and data channel.
      * @param config Configuration settings for the peer connection.
      */
-    PeerConnection(const Configuration &config);
+    explicit PeerConnection(const Configuration &config);
 
     /**
      * @brief Sends a text message over the data channel.
      * @param message The message to send.
      */
-    void sendMessage(const std::string &message);
+    void sendMessage(const std::string &message) const;
 
     /**
      * @brief Sends video data over the media track.
@@ -53,13 +52,13 @@ public:
      * @param len Length of the video data.
      * @param timestampMicro Timestamp of the video data in microseconds.
      */
-    void sendVideoFrame(const std::byte *data, size_t len, int64_t timestampMicro);
+    void sendVideoFrame(const std::byte *data, size_t len, int64_t timestampMicro) const;
 
     /**
      * @brief Handles incoming connection messages to establish a WebRTC peer connection.
      * @param message JSON message containing connection information.
      */
-    void handleConnectionMessage(const json &message);
+    void handleConnectionMessage(const json &message) const;
 
     ~PeerConnection();
 
@@ -75,7 +74,7 @@ private:
      * @param timestampMicro Timestamp in microseconds.
      * @return The equivalent RTP timestamp.
      */
-    uint32_t timestampMicroToRtp(uint64_t timestampMicro);
+    uint32_t timestampMicroToRtp(uint64_t timestampMicro) const;
 
     std::string localId_;
     std::string remoteId_;

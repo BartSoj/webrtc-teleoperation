@@ -17,17 +17,18 @@ struct VideoEncoderConfig
     int width = 640;
     int height = 480;
     AVRational time_base = {1, 30};
-    int gop_size = 10;
+    int gop_size = 30;
     AVPixelFormat pix_fmt = AV_PIX_FMT_YUV420P;
     int codec_flags = AV_CODEC_FLAG_LOW_DELAY;
     int max_b_frames = 0;
     int refs = 1;
 
     std::map<std::string, std::string> options = {
-        {"preset", "ultrafast"},
-        {"tune", "zerolatency"}
+        {"profile", "baseline"},  // Most basic profile, lowest latency, no B-frames
+        {"preset", "ultrafast"},  // Fastest encoding speed
+        {"tune", "zerolatency"},  // Minimalize buffering and frame reordering
+        {"level", "3.1"}          // H.264 level 3.1
     };
-
 };
 
 class VideoEncoder
@@ -40,7 +41,7 @@ public:
      * Sets up the codec context with parameters such as bit rate, resolution,
      * and pixel format. Allocates necessary resources for encoding.
      */
-    VideoEncoder(const VideoEncoderConfig &config);
+    explicit VideoEncoder(const VideoEncoderConfig &config);
 
     /**
      * @brief Encodes a single video frame.
@@ -61,20 +62,20 @@ public:
      *
      * Attempts to receive an encoded packet from the codec context.
      */
-    bool nextPacket();
+    bool nextPacket() const;
 
     /**
      * @brief Gets the data of the current encoded packet.
      * @return Pointer to the packet data.
      */
-    const std::byte *getPacketData();
+    const std::byte *getPacketData() const;
 
     /**
      * @brief Gets the size of the current encoded packet.
      * @return Size of the packet in bytes.
      */
 
-    size_t getPacketSize();
+    size_t getPacketSize() const;
 
     /**
      * @brief Gets the start time of the encoder.

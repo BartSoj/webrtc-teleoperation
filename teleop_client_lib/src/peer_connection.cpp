@@ -15,26 +15,24 @@ weak_ptr<T> make_weak_ptr(shared_ptr<T> ptr)
 PeerConnection::PeerConnection(const Configuration &config)
     : localId_(config.localId), remoteId_(config.remoteId), channelCallbacks_(config.channelCallbacks)
 {
-    auto pc = std::make_shared<rtc::PeerConnection>(config.rtcConfig);
+    const auto pc = std::make_shared<rtc::PeerConnection>(config.rtcConfig);
 
     setDefaultCallbacks();
 
     rtc::Description::Video media("video", rtc::Description::Direction::SendOnly);
     media.addH264Codec(config.payloadType);  // Must match the payload type of the external h264 RTP stream
     media.addSSRC(config.ssrc, "video-send");
-    auto track = pc->addTrack(media);
+    const auto track = pc->addTrack(static_cast<rtc::Description::Media>(media));
 
     // create RTP configuration
     auto rtpConfig = make_shared<rtc::RtpPacketizationConfig>(config.ssrc, "video", config.payloadType,
                                                               rtc::H264RtpPacketizer::defaultClockRate);
     // create packetizer
-    auto packetizer = make_shared<rtc::H264RtpPacketizer>(rtc::H264RtpPacketizer::Separator::StartSequence, rtpConfig);
+    const auto packetizer =
+        make_shared<rtc::H264RtpPacketizer>(rtc::H264RtpPacketizer::Separator::StartSequence, rtpConfig);
     // add RTCP SR handler
-    auto srReporter = make_shared<rtc::RtcpSrReporter>(rtpConfig);
+    const auto srReporter = make_shared<rtc::RtcpSrReporter>(rtpConfig);
     packetizer->addToChain(srReporter);
-    // add RTCP NACK handler
-    auto nackResponder = make_shared<rtc::RtcpNackResponder>();
-    packetizer->addToChain(nackResponder);
     // set handler
     track->setMediaHandler(packetizer);
 
@@ -43,33 +41,33 @@ PeerConnection::PeerConnection(const Configuration &config)
 
     this->srReporter_->rtpConfig->startTimestamp = timestampMicroToRtp(config.startTime);
 
-    pc->onStateChange([](rtc::PeerConnection::State state) { std::cout << "State: " << state << std::endl; });
+    pc->onStateChange([](const rtc::PeerConnection::State state) { std::cout << "State: " << state << std::endl; });
 
-    pc->onGatheringStateChange([](rtc::PeerConnection::GatheringState state)
+    pc->onGatheringStateChange([](const rtc::PeerConnection::GatheringState state)
                                { std::cout << "Gathering State: " << state << std::endl; });
 
     pc->onLocalDescription(
-        [config](rtc::Description description)
+        [config](const rtc::Description &description)
         {
-            json message = {
+            const json message = {
                 {"id", config.remoteId}, {"type", description.typeString()}, {"description", std::string(description)}};
 
-            if(auto ws = config.wws.lock()) ws->send(message.dump());
+            if(const auto ws = config.wws.lock()) ws->send(message.dump());
         });
 
     pc->onLocalCandidate(
-        [config](rtc::Candidate candidate)
+        [config](const rtc::Candidate &candidate)
         {
-            json message = {{"id", config.remoteId},
-                            {"type", "candidate"},
-                            {"candidate", std::string(candidate)},
-                            {"mid", candidate.mid()}};
+            const json message = {{"id", config.remoteId},
+                                  {"type", "candidate"},
+                                  {"candidate", std::string(candidate)},
+                                  {"mid", candidate.mid()}};
 
-            if(auto ws = config.wws.lock()) ws->send(message.dump());
+            if(const auto ws = config.wws.lock()) ws->send(message.dump());
         });
 
     pc->onDataChannel(
-        [this](shared_ptr<rtc::DataChannel> dc)
+        [this](const shared_ptr<rtc::DataChannel> &dc)
         {
             std::cout << "DataChannel from " << this->remoteId_ << " received with label \"" << dc->label() << "\""
                       << std::endl;
@@ -120,17 +118,23 @@ void PeerConnection::configureDataChannel()
         });
 }
 
-void PeerConnection::sendMessage(const std::string &message)
+void PeerConnection::sendMessage(const std::string &message) const
 {
     if(dataChannel_ && dataChannel_->isOpen()) this->dataChannel_->send(message);
 }
 
-void PeerConnection::sendVideoFrame(const std::byte *data, size_t len, int64_t timestampMicro)
+void PeerConnection::sendVideoFrame(const std::byte *data, const size_t len, const int64_t timestampMicro) const
 {
     if(track_ != nullptr && track_->isOpen())
     {
-        auto elapsedTimestamp = timestampMicroToRtp(timestampMicro);
+        const auto elapsedTimestamp = timestampMicroToRtp(timestampMicro);
         srReporter_->rtpConfig->timestamp += srReporter_->rtpConfig->startTimestamp + elapsedTimestamp;
+
+        if(const auto reportElapsedTimestamp = srReporter_->rtpConfig->timestamp - srReporter_->lastReportedTimestamp();
+           srReporter_->rtpConfig->timestampToSeconds(reportElapsedTimestamp) > 1)
+        {
+            srReporter_->setNeedsToReport();
+        }
 
         try
         {
@@ -143,9 +147,9 @@ void PeerConnection::sendVideoFrame(const std::byte *data, size_t len, int64_t t
     }
 }
 
-uint32_t PeerConnection::timestampMicroToRtp(uint64_t timestampMicro)
+uint32_t PeerConnection::timestampMicroToRtp(const uint64_t timestampMicro) const
 {
-    auto seconds = static_cast<double>(timestampMicro) / 1000000.0;
+    const auto seconds = static_cast<double>(timestampMicro) / 1000000.0;
     return srReporter_->rtpConfig->secondsToTimestamp(seconds);
 }
 
@@ -156,28 +160,26 @@ void PeerConnection::createDataChannel()
     rtcPeerConnection_->setLocalDescription();
 }
 
-void PeerConnection::handleConnectionMessage(const nlohmann::json &message)
+void PeerConnection::handleConnectionMessage(const json &message) const
 {
-    auto it = message.find("type");
+    const auto it = message.find("type");
     if(it == message.end()) return;
 
-    auto type = it->get<std::string>();
-
-    if(type == "offer")
+    if(const auto type = it->get<std::string>(); type == "offer")
     {
-        auto sdp = message["description"].get<std::string>();
+        const auto sdp = message["description"].get<std::string>();
         rtcPeerConnection_->setRemoteDescription(rtc::Description(sdp, type));
         rtcPeerConnection_->setLocalDescription();
     }
     else if(type == "answer")
     {
-        auto sdp = message["description"].get<std::string>();
+        const auto sdp = message["description"].get<std::string>();
         rtcPeerConnection_->setRemoteDescription(rtc::Description(sdp, type));
     }
     else if(type == "candidate")
     {
-        auto sdp = message["candidate"].get<std::string>();
-        auto mid = message["mid"].get<std::string>();
+        const auto sdp = message["candidate"].get<std::string>();
+        const auto mid = message["mid"].get<std::string>();
         rtcPeerConnection_->addRemoteCandidate(rtc::Candidate(sdp, mid));
     }
 }

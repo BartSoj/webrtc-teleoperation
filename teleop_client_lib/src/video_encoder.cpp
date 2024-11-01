@@ -91,19 +91,18 @@ void VideoEncoder::encodeFrame(const uint8_t* data, int width, int height, int s
     if(ret < 0)
     {
         std::cerr << "Error sending frame for encoding" << std::endl;
-        return;
     }
 }
 
-bool VideoEncoder::nextPacket()
+bool VideoEncoder::nextPacket() const
 {
     av_packet_unref(avPacket_);
-    int ret = avcodec_receive_packet(codecContext_, avPacket_);
+    const int ret = avcodec_receive_packet(codecContext_, avPacket_);
     if(ret == AVERROR(EAGAIN) || ret == AVERROR_EOF)
     {
         return false;
     }
-    else if(ret < 0)
+    if(ret < 0)
     {
         std::cerr << "Error receiving encoded packet" << std::endl;
         return false;
@@ -111,9 +110,9 @@ bool VideoEncoder::nextPacket()
     return true;
 }
 
-const std::byte* VideoEncoder::getPacketData() { return reinterpret_cast<const std::byte*>(avPacket_->data); }
+const std::byte* VideoEncoder::getPacketData() const { return reinterpret_cast<const std::byte*>(avPacket_->data); }
 
-size_t VideoEncoder::getPacketSize() { return avPacket_->size; }
+size_t VideoEncoder::getPacketSize() const { return avPacket_->size; }
 
 int64_t VideoEncoder::getStartTime() const { return startTime_; }
 
