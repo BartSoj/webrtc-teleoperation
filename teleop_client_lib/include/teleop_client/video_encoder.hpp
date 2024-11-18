@@ -96,7 +96,7 @@ public:
 
 private:
     int64_t startTime_;
-    int frameIndex_;
+    int64_t frameIndex_;
     AVCodecContext *codecContext_;
     AVFrame *avFrame_;
     AVPacket *avPacket_;
