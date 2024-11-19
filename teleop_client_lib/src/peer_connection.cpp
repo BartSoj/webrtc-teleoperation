@@ -127,8 +127,8 @@ void PeerConnection::sendVideoFrame(const std::byte *data, const size_t len, con
 {
     if(track_ != nullptr && track_->isOpen())
     {
-        const auto elapsedTimestamp = timestampMicroToRtp(timestampMicro);
-        srReporter_->rtpConfig->timestamp += srReporter_->rtpConfig->startTimestamp + elapsedTimestamp;
+        const auto timestampRtp = timestampMicroToRtp(timestampMicro);
+        srReporter_->rtpConfig->timestamp = timestampRtp;
 
         if(const auto reportElapsedTimestamp = srReporter_->rtpConfig->timestamp - srReporter_->lastReportedTimestamp();
            srReporter_->rtpConfig->timestampToSeconds(reportElapsedTimestamp) > 1)

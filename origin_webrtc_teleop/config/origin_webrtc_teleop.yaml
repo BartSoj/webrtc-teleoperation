@@ -8,7 +8,7 @@ origin_webrtc_teleop:
       bit_rate: 1000000
       width: 640
       height: 480
-      framerate: 60
+      framerate: 6
       gop_size: 6
       max_b_frames: 0
       refs: 3
