@@ -27,6 +27,7 @@
 
     let controlMsg: any = null;
 
+    let requestLatencyUpdate: () => void;
     let sendMessage: (msg: string) => void;
     let sendControlMsg: () => void;
 
@@ -88,7 +89,7 @@
         const offerBtn = document.getElementById('offerBtn') as HTMLInputElement;
         const videoElement = document.getElementById('video-element') as HTMLVideoElement;
 
-        setInterval(() => {
+        requestLatencyUpdate = () => {
             const tR1 = Math.trunc(performance.now());
             for (const dc of Object.values(dataChannelMap)) {
                 const message = JSON.stringify({
@@ -97,7 +98,7 @@
                 });
                 dc.send(message);
             }
-        }, 2000); // Sends every 2 seconds
+        }
 
         sendMessage = (msg) => {
             for (const dc of Object.values(dataChannelMap)) {
@@ -219,6 +220,7 @@
         function setupDataChannel(dc: RTCDataChannel, id: string): RTCDataChannel {
             dc.onopen = () => {
                 console.log(`DataChannel from ${id} open`);
+                requestLatencyUpdate()
             };
             dc.onclose = () => {
                 console.log(`DataChannel from ${id} closed`);
@@ -258,6 +260,7 @@
                         } else {
                             console.log('RTP timestamp is not available for this frame.');
                         }
+                        requestLatencyUpdate();
                     });
                 } else if (data.type === 'log' && logs) {
                     logs.updateLogMessages(data.log);

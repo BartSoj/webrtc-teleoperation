@@ -3,12 +3,23 @@
         latency: number;
     }
 
+    let latencies: number[] = [];
+    const MAX_VALUES = 6;
+
     let latencyInfo: LatencyInfo = {
         latency: 0
     };
 
     export function updateLatencyInfo(newLatencyInfo: LatencyInfo) {
-        latencyInfo = newLatencyInfo;
+        latencies.push(newLatencyInfo.latency);
+
+        if (latencies.length > MAX_VALUES) {
+            latencies.shift();
+        }
+
+        const maxLatency = Math.max(...latencies);
+
+        latencyInfo = {latency: maxLatency};
     }
 </script>
 
