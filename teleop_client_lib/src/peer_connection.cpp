@@ -108,12 +108,54 @@ void PeerConnection::configureDataChannel()
 {
     dataChannel_->onOpen(channelCallbacks_.onChannelOpenCallback);
     dataChannel_->onClosed(channelCallbacks_.onChannelClosedCallback);
+
     dataChannel_->onMessage(
         [this](auto data)
         {
             if(std::holds_alternative<std::string>(data))
             {
-                channelCallbacks_.onChannelMessageCallback(std::get<std::string>(data));
+                const std::string message = std::get<std::string>(data);
+                try
+                {
+                    // Parse the received message as JSON
+                    json receivedMsg = json::parse(message);
+
+                    // Check if the message is of type "latency"
+                    if(receivedMsg.contains("type") && receivedMsg["type"] == "latency")
+                    {
+                        const int64_t tR1 = receivedMsg["latency"];
+                        const int64_t now = av_gettime_relative() / 1000;
+
+                        // Current video track times
+                        const auto tSV1 = static_cast<uint64_t>(
+                            srReporter_->rtpConfig->timestampToSeconds(srReporter_->rtpConfig->timestamp) * 1000.0);
+                        const auto tS1 = tSV1;  // video timestamp converted to milliseconds is equal to the time when the video frame was sent
+
+                        // Create response message
+                        json responseMsg = {{"type", "latency"},
+                                            {"latency",
+                                             {{"tR1", tR1},  // Reflect back the received time
+                                              {"delay_since_received", 0},
+                                              {"sender_local_clock", now},
+                                              {"track_times_msec", {{tSV1, tS1}}}}}};  // Use array format
+
+                        // Send response
+                        if(dataChannel_ && dataChannel_->isOpen())
+                        {
+                            // print the response message
+                            std::cout << "Sending latency response: " << responseMsg.dump() << std::endl;
+                            dataChannel_->send(responseMsg.dump());
+                        }
+                    }
+                    else
+                    {
+                        channelCallbacks_.onChannelMessageCallback(message);
+                    }
+                }
+                catch(const std::exception &e)
+                {
+                    std::cerr << "Error processing received message: " << e.what() << std::endl;
+                }
             }
         });
 }

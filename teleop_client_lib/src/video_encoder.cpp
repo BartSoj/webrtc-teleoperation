@@ -85,7 +85,7 @@ void VideoEncoder::encodeFrame(const uint8_t* data, int width, int height, int s
     sws_scale(swsCtx, srcData, srcLinesize, 0, height, avFrame_->data, avFrame_->linesize);
     sws_freeContext(swsCtx);
 
-    currentTimestamp_ = av_gettime_relative() - startTime_;
+    currentTimestamp_ = av_gettime_relative();
     avFrame_->pts = av_rescale_q(currentTimestamp_, {1, AV_TIME_BASE}, codecContext_->time_base);
 
     int ret = avcodec_send_frame(codecContext_, avFrame_);
