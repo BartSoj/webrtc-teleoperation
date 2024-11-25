@@ -1,38 +1,17 @@
-# create-svelte
+# Teleop Web Client
 
-Everything you need to build a Svelte project, powered by [`create-svelte`](https://github.com/sveltejs/kit/tree/main/packages/create-svelte).
+This is the web client for the robot teleoperation. It allows the user to view the video stream form robot camera and
+additional telemetry data as well as control the robot using a gamepad.
 
-## Creating a project
-
-If you're seeing this, you've probably already done this step. Congrats!
-
-```bash
-# create a new project in the current directory
-npm create svelte@latest
-
-# create a new project in my-app
-npm create svelte@latest my-app
-```
-
-## Developing
-
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
+## Running the website
 
 ```bash
-npm run dev
-
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
+npm run dev -- --host
 ```
 
-## Building
+## Using the website
 
-To create a production version of your app:
-
-```bash
-npm run build
-```
-
-You can preview the production build with `npm run preview`.
-
-> To deploy your app, you may need to install an [adapter](https://kit.svelte.dev/docs/adapters) for your target environment.
+- Enter the authentication and id for the robot. It can be webrtc_teleop package configuration.
+- Choose observe to view the video stream and telemetry data.
+- Choose control to view the video stream, telemetry data and control the robot using a gamepad.
+  ![img.png](img.png)
