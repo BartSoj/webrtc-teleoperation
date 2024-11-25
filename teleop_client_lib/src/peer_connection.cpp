@@ -123,28 +123,13 @@ void PeerConnection::configureDataChannel()
                     // Check if the message is of type "latency"
                     if(receivedMsg.contains("type") && receivedMsg["type"] == "latency")
                     {
-                        const int64_t tR1 = receivedMsg["latency"];
+                        // Add the local clock time to the message
                         const int64_t now = av_gettime_relative() / 1000;
+                        receivedMsg["latency"]["sender_local_clock"] = now;
 
-                        // Current video track times
-                        const auto tSV1 = static_cast<uint64_t>(
-                            srReporter_->rtpConfig->timestampToSeconds(srReporter_->rtpConfig->timestamp) * 1000.0);
-                        const auto tS1 = tSV1;  // video timestamp converted to milliseconds is equal to the time when the video frame was sent
-
-                        // Create response message
-                        json responseMsg = {{"type", "latency"},
-                                            {"latency",
-                                             {{"tR1", tR1},  // Reflect back the received time
-                                              {"delay_since_received", 0},
-                                              {"sender_local_clock", now},
-                                              {"track_times_msec", {{tSV1, tS1}}}}}};  // Use array format
-
-                        // Send response
                         if(dataChannel_ && dataChannel_->isOpen())
                         {
-                            // print the response message
-                            std::cout << "Sending latency response: " << responseMsg.dump() << std::endl;
-                            dataChannel_->send(responseMsg.dump());
+                            dataChannel_->send(receivedMsg.dump());
                         }
                     }
                     else

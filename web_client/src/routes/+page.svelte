@@ -93,7 +93,7 @@
             for (const dc of Object.values(dataChannelMap)) {
                 const message = JSON.stringify({
                     type: "latency",
-                    latency: tR1
+                    latency: {tR1: tR1}
                 });
                 dc.send(message);
             }
@@ -235,22 +235,20 @@
                 } else if (data.type === 'latency' && latency) {
                     // Latency Calculation
                     const tR2 = performance.now(); // Receiver's current time
-                    const {tR1, delay_since_received, sender_local_clock, track_times_msec} = data.latency;
+                    const {tR1, sender_local_clock} = data.latency;
 
                     // Round Trip Time (RTT) and Network Latency
-                    const rtt = tR2 - delay_since_received - tR1;
+                    const rtt = tR2 - tR1;
                     const networkLatency = rtt / 2;
-                    let senderTime = sender_local_clock + delay_since_received + networkLatency;
+                    let senderTime = sender_local_clock + networkLatency;
 
                     videoElement.requestVideoFrameCallback((now: DOMHighResTimeStamp, framemeta: VideoFrameCallbackMetadata) => {
                         if (framemeta.rtpTimestamp !== undefined) {
                             const delaySinceVideoCallbackRequested = now - tR2;
                             senderTime += delaySinceVideoCallbackRequested;
-                            const [tSV1, tS1] = track_times_msec[0];
 
                             // Calculate expected and actual video times
-                            const timeSinceLastKnownFrame = senderTime - tS1;
-                            const expectedVideoTimeMsec = tSV1 + timeSinceLastKnownFrame;
+                            const expectedVideoTimeMsec = senderTime;
                             const actualVideoTimeMsec = Math.trunc(framemeta.rtpTimestamp / 90); // Convert RTP timestamp to milliseconds
 
                             // Compute and update latency
