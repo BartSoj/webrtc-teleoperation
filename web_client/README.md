@@ -14,4 +14,4 @@ npm run dev -- --host
 - Enter the authentication and id for the robot. It can be webrtc_teleop package configuration.
 - Choose observe to view the video stream and telemetry data.
 - Choose control to view the video stream, telemetry data and control the robot using a gamepad.
-  ![img.png](img.png)
+  ![img.png](docs/img.png)
