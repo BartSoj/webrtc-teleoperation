@@ -4,7 +4,7 @@
     import Logs from './Logs.svelte';
     import Network from './Network.svelte';
     import Odometry from './Odometry.svelte';
-    import Messaging from "./Messaging.svelte";
+    import Messaging from './Messaging.svelte';
     import Latency from './Latency.svelte';
 
     const DEV_MODE: boolean = false;
@@ -13,6 +13,7 @@
     let auth: string = '';
     let access: string = 'observe';
     let offerId: string = '';
+    let enableMessaging: boolean = false;
 
     let battery: Battery | undefined;
     let logs: Logs | undefined;
@@ -55,8 +56,8 @@
                     request_control: gamepad.buttons[0].pressed,
                     reset_control: gamepad.buttons[1].pressed,
                     previous_control: gamepad.buttons[2].pressed,
-                    forward: -gamepad.axes[1],
-                    rotation: -gamepad.axes[2]
+                    forward: Math.abs(gamepad.axes[1]) >= 0.1 ? -gamepad.axes[1] : 0,
+                    rotation: Math.abs(gamepad.axes[2]) >= 0.1 ? -gamepad.axes[2] : 0
                 };
                 sendControlMsg();
             }
@@ -260,7 +261,9 @@
                         } else {
                             console.log('RTP timestamp is not available for this frame.');
                         }
-                        requestLatencyUpdate();
+                        setTimeout(() => {
+                            requestLatencyUpdate();
+                        }, 200);
                     });
                 } else if (data.type === 'log' && logs) {
                     logs.updateLogMessages(data.log);
@@ -347,6 +350,10 @@
                     <option value="observe" selected>Observe</option>
                     <option value="control">Control</option>
                 </select>
+                <div style="display: inline-flex; align-items: center; gap: 0.5em; white-space: nowrap;">
+                    <label for="enableMessagingCheckbox">Enable Messaging</label>
+                    <input type="checkbox" bind:checked={enableMessaging} id="enableMessagingCheckbox"/>
+                </div>
                 <input type="button" id="offerBtn" value="Offer" disabled={createOfferDisabled}/>
             </div>
         {/if}
@@ -361,12 +368,15 @@
             <div class="box" style="bottom: 15%; left: 5%;">
                 <Battery bind:this={battery}/>
             </div>
-            <div class="box" style="bottom: 15%; left: 50%; transform: translateX(-50%)">
-                <Messaging sendMessage={sendMessage}/>
-            </div>
-            <div class="box" style="top: 30%; right: 5%;">
-                <Logs bind:this={logs}/>
-            </div>
+
+            {#if enableMessaging}
+                <div class="box" style="bottom: 15%; left: 50%; transform: translateX(-50%)">
+                    <Messaging sendMessage={sendMessage}/>
+                </div>
+                <div class="box" style="top: 30%; right: 5%;">
+                    <Logs bind:this={logs}/>
+                </div>
+            {/if}
             <div class="box" style="bottom: 15%; right: 5%;">
                 <Latency bind:this={latency}/>
             </div>
@@ -390,6 +400,7 @@
         padding: 0;
         overflow: hidden;
         background-color: black;
+        user-select: none;
     }
 
     main {
@@ -435,6 +446,11 @@
         text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
         position: relative;
         top: 15%;
+    }
+
+    label {
+        margin: 0.5em 0;
+        font-size: 0.8em;
     }
 
     .box {
