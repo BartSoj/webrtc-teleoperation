@@ -7,12 +7,14 @@ TeleoperationConfig TeleopConfigParser::parse()
     TeleoperationConfig config;
 
     config.localId = getParameter<std::string>("local_id", "origin");
+    config.auth = getParameter<std::string>("auth", "");
     config.hostname = getParameter<std::string>("hostname", config.hostname);
     config.port = getParameter<std::string>("port", config.port);
     config.stunServer = getParameter<std::string>("stun_server", config.stunServer);
 
-    RCLCPP_INFO(node_->get_logger(), "TeleoperationConfig: localId=%s, hostname=%s, port=%s, stunServer=%s",
-                config.localId.c_str(), config.hostname.c_str(), config.port.c_str(), config.stunServer.c_str());
+    RCLCPP_INFO(node_->get_logger(), "TeleoperationConfig: localId=%s, auth=%s, hostname=%s, port=%s, stunServer=%s",
+                config.localId.c_str(), config.auth.c_str(), config.hostname.c_str(), config.port.c_str(),
+                config.stunServer.c_str());
 
     auto encoderConfig = parseVideoEncoderConfig();
     config.videoEncoder = std::make_shared<VideoEncoder>(encoderConfig);

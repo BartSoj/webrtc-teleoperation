@@ -11,7 +11,7 @@ weak_ptr<T> make_weak_ptr(shared_ptr<T> ptr)
 }
 
 Teleoperation::Teleoperation(const TeleoperationConfig &config)
-    : localId_(config.localId), videoEncoder_(config.videoEncoder)
+    : localId_(config.localId), auth_(config.auth), videoEncoder_(config.videoEncoder)
 {
     wsUrl_ = "ws://" + config.hostname + ":" + config.port + "/" + localId_;
 
@@ -55,7 +55,7 @@ Teleoperation::Teleoperation(const TeleoperationConfig &config)
             auto id = it->get<std::string>();
 
             it = message.find("auth");
-            if(it == message.end() || it->get<std::string>() != "auth0") return;
+            if(it == message.end() || it->get<std::string>() != auth_) return;
 
             it = message.find("access");
             if(it == message.end()) return;

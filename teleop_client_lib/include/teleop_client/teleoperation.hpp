@@ -20,6 +20,8 @@ struct TeleoperationConfig
 {
     /// @brief The identifier for the teleoperation session.
     std::string localId;
+    // @brief The authentication password for the teleoperation session.
+    std::string auth;
     /// @brief The hostname for the WebSocket connection.
     std::string hostname = "127.0.0.1";
     /// @brief The port for the WebSocket connection.
@@ -145,6 +147,7 @@ private:
     std::function<void(std::string data)> onChannelMessageCallback_;
     std::function<void(std::string)> onChannelControlMessageCallback_;
     std::string localId_;
+    std::string auth_;
     std::unordered_map<std::string, shared_ptr<PeerConnection>> peerConnectionMap_;
     shared_ptr<VideoEncoder> videoEncoder_;
 };
