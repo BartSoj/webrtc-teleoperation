@@ -12,110 +12,101 @@ For more information about changes and new features see [CHANGELOG.md](CHANGELOG
 - [libdatachannel](https://github.com/paullouisageneau/libdatachannel)
 - [FFmpeg](https://ffmpeg.org/)
 
-## Running on your PC
+## Running on the Origin
 
-## Build
-
-Build the PC client using CMake:
-
-```
-$ cd pc_client
-$ cmake -B build
-$ cd build
-$ make -j2
-```
-
-## Run
-
-First, start the signaling server for establishing the WebRTC connection between your PC client and the web app:
+**Start the signaling server** for establishing the WebRTC connection between the Origin and the web app:
 
 ```
 $ python signaling/signaling-server.py
 ```
 
-In separate terminal, start the web app:
+In separate terminal, in order to **start the web app**, go to the directory where the web app is located:
 
 ```
 $ cd web_client
-$ python3 -m http.server --bind 0.0.0.0 8080
 ```
 
-Now, in seperate terminal, start the PC client:
+Install the dependencies with `npm install` if you haven't already.
+
+Start the development server:
 
 ```
-$ cd pc_client/build
-$ ./libdatachannel_app
-``` 
-
-The PC client and the web app should now be connected to the signaling server. To establish a peer connection between
-them, go to http://localhost:8080/ and enter auth (by default set to 'auth0') and remote id (by default set to '
-origin-1') and press 'Offer'.
-The peer connection should be established and you should be able to see a video stream from your PC in the web app.
-
-(Optional) If you want to use a video from gstreamer, change main.cpp file in pc_client/src and start the RTP h264 video
-stream with payload type 96
-on `localhost:6000`.
-
-On Linux, use the following gstreamer demo pipeline to capture video from a V4L2 webcam and send it as RTP to port
-6000 (You might need to
-change `/dev/video0` to your actual device):
-
-```
-$ gst-launch-1.0 v4l2src device=/dev/video0 ! video/x-raw,width=640,height=480 ! videoconvert ! queue ! x264enc tune=zerolatency bitrate=1000 key-int-max=30 ! video/x-h264, profile=constrained-baseline ! rtph264pay pt=96 mtu=1200 ! udpsink host=127.0.0.1 port=6000
+$ npm run dev -- --host
 ```
 
-On Mac, use the following GStreamer demo pipeline to capture video from an AVFoundation video source and send it as RTP
-to port 6000:
+**Starting the teleoperation node.**
+
+On the origin, start the teleoperation container, that will start the teleoperation node automatically:
 
 ```
-$ gst-launch-1.0 avfvideosrc device-index=0 ! video/x-raw,width=640,height=480 ! videoconvert ! queue ! x264enc tune=zerolatency bitrate=1000 key-int-max=30 ! video/x-h264,profile=constrained-baseline ! rtph264pay pt=96 mtu=1200 ! udpsink host=127.0.0.1 port=6000
+cd ~/webrtc_teleop/docker
+docker compose -f docker-compose.yaml up --build
 ```
 
-## Running on Origin
+If you want to start the development container, where the teleoperation node doesn't start automatically.
 
-## Build
-
-Place the origin_webrtc_teleop folder inside the src directory of the workspace that is located on the origin.
-
-Navigate to the workspace directory and build the package using the following command (don't forget to source the
-workspace
-first):
+Start the teleoperation development container:
 
 ```
-$ colcon build --packages-select origin_webrtc_teleop
+cd ~/webrtc_teleop/docker
+docker compose -f docker-compose.dev.yaml up --build -d
 ```
 
-## Run
-
-Start the signaling server for establishing the WebRTC connection between the origin and the web app:
+Then, you can start the teleoperation node with:
 
 ```
-$ python signaling/signaling-server.py
+ros2 launch origin_webrtc_teleop origin_webrtc_teleop.launch.py
 ```
 
-In separate terminal, start the web app:
+## Configuration
 
-```
-$ cd web_client
-$ python3 -m http.server --bind 0.0.0.0 8080
-```
+---
 
-On the origin navigate to the workspace and set up the environment:
+You can adjust the configuration for the teleoperation by editing
+the [origin_webrtc_teleop.yaml](origin_webrtc_teleop/config/origin_webrtc_teleop.yaml) file.
+Inside the file, you can adjust the following parameters:
 
-```
-$ . install/setup.bash
-```
+- local_id: The unique string that identifies the robot.
+- auth: The authentication string that is used to establish a connection between the web app and the robot.
+- hostname: The IP address of the signaling server.
+- port: The port of the signaling server.
+- stun_server: The STUN server used for NAT traversal.
+  Video encoding parameters:
+- bit_rate: The target bit rate in bits per second.
+- width: The width of the video frame in pixels.
+- height: The height of the video frame in pixels.
+- framerate: The number of frames per second.
+- gop_size: Defines the Group of Pictures (GOP) size, setting the interval between keyframes (I-frames).
+- max_b_frames: The maximum number of B-frames between I-frames and P-frames.
+- ref: Number of reference frames used for motion prediction.
+  Additional encoding parameters can be set, following FFmpeg's H.264 encoder options. Most common options are:
+- profile: The H.264 profile to use.
+- preset: Determines encoding speed/efficiency trade-offs.
+- tune: Adjusts the encoder's settings to improve the quality of the encoded video.
+- level: Indicates the H.264 level, defining constraints like resolution and bit rate for compatibility.
 
-Then, start the teleoperation node and pass signaling server IP as a parameter:
+## Usage
 
-```
-ros2 run origin_webrtc_teleop origin_webrtc_teleop --ros-args -p hostname:=<signaling_server_ip>
-```
+---
 
-## To-Do
+**Using the web app:**
 
-- [ ] add tests for teleoperation package
-- [ ] add robot control functionality from the web app
-- [ ] Use the NVIDIA Jetson's hardware-accelerated FFmpeg encoder
-- [ ] configure project to run in separate docker container
-- [ ] add a launch file for the origin_webrtc_teleop package
+- Enter the authentication and id for the robot. It can be found in
+  the [origin_webrtc_teleop.yaml](origin_webrtc_teleop/config/origin_webrtc_teleop.yaml) configuration file or in the
+  terminal output when the teleoperation node is started.
+- Choose `observe` to view the video stream and telemetry data.
+- Choose `control` to view the video stream, telemetry data and control the robot using a gamepad.
+- Select `Enable messaging` for the chat feature with other clients connected to this robot.
+  ![web_client_login_page.png](docs/media/web_client_login_page.png)
+
+---
+
+**Using the controller:**
+
+- Use the left joystick to control the robot's linear velocity.
+- Use the right joystick to control the robot's angular velocity.
+- Press `X` to reset the control mode.
+- Press `A` to reqeust the control mode and start controlling the robot with your controller.
+- Press `B` to go to the previous control mode.
+- Press `Y` to take over the control of the robot in case multiple joystick controllers are connected and robot is
+  already in the correct control mode.
