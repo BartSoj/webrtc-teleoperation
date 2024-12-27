@@ -60,6 +60,11 @@ public:
     void sendVideoFrame(const std::byte *data, size_t len, int64_t timestampMicro) const;
 
     /**
+     * @brief Sends a connection message to establish a WebRTC peer connection.
+     */
+    void createConnection();
+
+    /**
      * @brief Handles incoming connection messages to establish a WebRTC peer connection.
      * @param message JSON message containing connection information.
      */
@@ -69,8 +74,6 @@ public:
 
 private:
     void setDefaultCallbacks();
-
-    void createDataChannel();
 
     void configureDataChannel();
 

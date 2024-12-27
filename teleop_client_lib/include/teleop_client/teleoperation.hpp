@@ -1,14 +1,9 @@
 #pragma once
 
 #include <future>
-#include <iostream>
-#include <memory>
-#include <rtc/rtc.hpp>
-#include <stdexcept>
+#include <nlohmann/json.hpp>
 #include <unordered_map>
-#include <utility>
 
-#include "nlohmann/json.hpp"
 #include "peer_connection.hpp"
 #include "video_encoder.hpp"
 
@@ -23,7 +18,7 @@ struct TeleoperationConfig
     // @brief The authentication password for the teleoperation session.
     std::string auth;
     /// @brief The hostname for the WebSocket connection.
-    std::string hostname = "127.0.0.1";
+    std::string hostname = "0.0.0.0";
     /// @brief The port for the WebSocket connection.
     std::string port = "8000";
     /// @brief The STUN server url for ICE candidates.
@@ -45,6 +40,8 @@ public:
      * @brief Starts the signaling process by opening a WebSocket connection.
      */
     void startSignaling();
+
+    void sendOffer(const std::string &remoteId, const std::string &access);
 
     /**
      * @brief Sets the callback function to be called when a data channel is opened.
@@ -91,7 +88,7 @@ public:
      * @param height Height of the video frame.
      * @param step Step size for the video frame data.
      */
-    void sendVideoFrame(const std::string &remoteId, const uint8_t *frameData, int width, int height, int step);
+    void sendVideoFrame(const std::string &remoteId, const uint8_t *frameData, int width, int height, size_t step);
 
     /**
      * @brief Broadcasts video frame data to all connected peers.
@@ -100,14 +97,7 @@ public:
      * @param height Height of the video frame.
      * @param step Step size for the video frame data.
      */
-    void broadcastVideoFrame(const uint8_t *frameData, int width, int height, int step);
-
-    /**
-     * @brief Adds a new peer connection to the teleoperation session.
-     * @param id The identifier for the new peer.
-     * @param pc Shared pointer to the PeerConnection object.
-     */
-    void addPeerConnection(const std::string &id, std::shared_ptr<PeerConnection> pc);
+    void broadcastVideoFrame(const uint8_t *frameData, int width, int height, size_t step);
 
     /**
      * @brief Gets the local identifier for the teleoperation.
@@ -115,28 +105,9 @@ public:
      */
     const std::string &getLocalId() const { return localId_; }
 
-    /**
-     * @brief Gets the RTC configuration used for the teleoperation session.
-     * @return The RTC configuration.
-     */
-    const rtc::Configuration &getConfig() const { return rtcConfig_; }
-
-    /**
-     * @brief Gets the WebSocket connection used for signaling.
-     * @return Shared pointer to the WebSocket connection.
-     */
-    std::shared_ptr<rtc::WebSocket> getWebSocket() const { return ws_; }
-
-    /**
-     * @brief Gets the map of peer connections.
-     * @return A reference to the map of peer connections.
-     */
-    const std::unordered_map<std::string, std::shared_ptr<PeerConnection>> &getPeerConnectionMap() const
-    {
-        return peerConnectionMap_;
-    }
-
 private:
+    shared_ptr<PeerConnection> createPeerConnection(const std::string &remoteId, const std::string &access);
+
     rtc::Configuration rtcConfig_;
     std::string wsUrl_;
     shared_ptr<rtc::WebSocket> ws_;

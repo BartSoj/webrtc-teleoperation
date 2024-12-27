@@ -180,7 +180,7 @@ uint32_t PeerConnection::timestampMicroToRtp(const uint64_t timestampMicro) cons
     return srReporter_->rtpConfig->secondsToTimestamp(seconds);
 }
 
-void PeerConnection::createDataChannel()
+void PeerConnection::createConnection()
 {
     dataChannel_ = rtcPeerConnection_->createDataChannel("test");
     configureDataChannel();

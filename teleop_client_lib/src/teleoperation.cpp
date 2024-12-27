@@ -75,19 +75,7 @@ Teleoperation::Teleoperation(const TeleoperationConfig &config)
             else if(type == "offer")
             {
                 std::cout << "Answering to " + id << std::endl;
-                PeerConnection::Configuration pcConfig;
-                pcConfig.rtcConfig = rtcConfig_;
-                pcConfig.wws = make_weak_ptr(ws_);
-                pcConfig.localId = this->localId_;
-                pcConfig.remoteId = id;
-                pcConfig.channelCallbacks.onChannelOpenCallback = onChannelOpenCallback_;
-                pcConfig.channelCallbacks.onChannelClosedCallback = onChannelClosedCallback_;
-                pcConfig.startTime = this->videoEncoder_->getStartTime();
-                if(access == "control")
-                    pcConfig.channelCallbacks.onChannelMessageCallback = onChannelControlMessageCallback_;
-                else
-                    pcConfig.channelCallbacks.onChannelMessageCallback = onChannelMessageCallback_;
-                pc = std::make_shared<PeerConnection>(pcConfig);
+                pc = createPeerConnection(id, access);
             }
             else
             {
@@ -95,8 +83,6 @@ Teleoperation::Teleoperation(const TeleoperationConfig &config)
             }
 
             pc->handleConnectionMessage(message);
-
-            this->peerConnectionMap_.emplace(id, pc);
         });
 }
 
@@ -106,6 +92,13 @@ void Teleoperation::startSignaling()
     ws_->open(wsUrl_);
     std::cout << "Waiting for signaling to be connected..." << std::endl;
     wsFuture_.get();
+}
+
+void Teleoperation::sendOffer(const std::string &remoteId, const std::string &access)
+{
+    std::cout << "Sending an offer to " + remoteId << std::endl;
+    auto pc = createPeerConnection(remoteId, access);
+    pc->createConnection();
 }
 
 void Teleoperation::onChannelOpen(const std::function<void()> &callback) { onChannelOpenCallback_ = callback; }
@@ -133,7 +126,7 @@ void Teleoperation::broadcastMessage(const std::string &message)
 }
 
 void Teleoperation::sendVideoFrame(const std::string &remoteId, const uint8_t *frameData, int width, int height,
-                                   int step)
+                                   size_t step)
 {
     videoEncoder_->encodeFrame(frameData, width, height, step);
     while(videoEncoder_->nextPacket())
@@ -148,7 +141,7 @@ void Teleoperation::sendVideoFrame(const std::string &remoteId, const uint8_t *f
     }
 }
 
-void Teleoperation::broadcastVideoFrame(const uint8_t *frameData, int width, int height, int step)
+void Teleoperation::broadcastVideoFrame(const uint8_t *frameData, int width, int height, size_t step)
 {
     videoEncoder_->encodeFrame(frameData, width, height, step);
     while(videoEncoder_->nextPacket())
@@ -163,7 +156,21 @@ void Teleoperation::broadcastVideoFrame(const uint8_t *frameData, int width, int
     }
 }
 
-void Teleoperation::addPeerConnection(const std::string &id, std::shared_ptr<PeerConnection> pc)
+shared_ptr<PeerConnection> Teleoperation::createPeerConnection(const std::string &remoteId, const std::string &access)
 {
-    peerConnectionMap_.emplace(id, std::move(pc));
+    PeerConnection::Configuration pcConfig;
+    pcConfig.rtcConfig = rtcConfig_;
+    pcConfig.wws = make_weak_ptr(ws_);
+    pcConfig.localId = this->localId_;
+    pcConfig.remoteId = remoteId;
+    pcConfig.channelCallbacks.onChannelOpenCallback = onChannelOpenCallback_;
+    pcConfig.channelCallbacks.onChannelClosedCallback = onChannelClosedCallback_;
+    pcConfig.startTime = this->videoEncoder_->getStartTime();
+    if(access == "control")
+        pcConfig.channelCallbacks.onChannelMessageCallback = onChannelControlMessageCallback_;
+    else
+        pcConfig.channelCallbacks.onChannelMessageCallback = onChannelMessageCallback_;
+    auto pc = std::make_shared<PeerConnection>(pcConfig);
+    peerConnectionMap_.emplace(remoteId, pc);
+    return pc;
 }
