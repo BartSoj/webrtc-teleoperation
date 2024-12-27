@@ -1,0 +1,19 @@
+services:
+  origin_webrtc_teleop:
+    build:
+      context: ..
+      target: dev
+      dockerfile: docker/Dockerfile.origin
+    container_name: webrtc_teleop_dev
+    environment:
+      ROS_DOMAIN_ID: ${ROS_DOMAIN_ID}
+      RMW_IMPLEMENTATION: rmw_cyclonedds_cpp
+    privileged: true
+    network_mode: host
+    ipc: host
+    volumes:
+      - /dev/bus/usb:/dev/bus/usb
+      # Mount a workspace to the container to allow the user to make persistent changes
+      - type: bind
+        source: /Users/bart/CLionProjects/webrtc_teleop
+        target: /root/ws/src/webrtc_teleop

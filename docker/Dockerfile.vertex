@@ -1,0 +1,6 @@
+FROM webrtc_teleop:latest AS base
+
+RUN source /opt/ros/${ROS_DISTRO}/setup.bash && \
+    colcon build --packages-select avular_mavros_msgs --install-base /usr/local
+
+CMD ["tail", "-f", "/dev/null"]

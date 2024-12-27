@@ -1,10 +1,9 @@
-version: '3'
 services:
   webrtc_teleop:
     build:
       context: ..
       target: prod
-      dockerfile: docker/Dockerfile
+      dockerfile: docker/Dockerfile.origin
     container_name: webrtc_teleop
     environment:
       ROS_DOMAIN_ID: ${ROS_DOMAIN_ID}

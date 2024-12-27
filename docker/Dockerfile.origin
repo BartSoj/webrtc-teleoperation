@@ -1,0 +1,17 @@
+FROM webrtc_teleop:latest AS base
+
+# Setup message definitions
+COPY origin-msgs_arm64_1.0.1.deb /
+RUN apt update && apt install -y /origin-msgs_arm64_1.0.1.deb
+
+# build origin_webrtc_teleop
+RUN source /opt/ros/${ROS_DISTRO}/setup.sh && \
+    colcon build --packages-select origin_webrtc_teleop
+
+# Development stage
+FROM base AS dev
+CMD ["tail", "-f", "/dev/null"]
+
+# Production stage
+FROM base AS prod
+CMD ["bash", "-c", "source /root/ws/install/setup.bash && ros2 launch origin_webrtc_teleop origin_webrtc_teleop.launch.py"]
