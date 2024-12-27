@@ -1,0 +1,9 @@
+# Used to set a certain control mode for state references
+
+# control mode to be used
+avular_mavros_msgs/ControlMode control_mode
+---
+# Status indicating if the control mode was set successfully
+uint32 status
+# Confirmation or error message
+string message "Unexpected Error. Response message not set."
