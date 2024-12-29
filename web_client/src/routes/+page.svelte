@@ -28,7 +28,6 @@
 
     let controlMsg: any = null;
 
-    let requestLatencyUpdate: () => void;
     let sendMessage: (msg: string) => void;
     let sendControlMsg: () => void;
 
@@ -89,17 +88,6 @@
 
         const offerBtn = document.getElementById('offerBtn') as HTMLInputElement;
         const videoElement = document.getElementById('video-element') as HTMLVideoElement;
-
-        requestLatencyUpdate = () => {
-            const tR1 = Math.trunc(performance.now());
-            for (const dc of Object.values(dataChannelMap)) {
-                const message = JSON.stringify({
-                    type: "latency",
-                    latency: {tR1: tR1}
-                });
-                dc.send(message);
-            }
-        }
 
         sendMessage = (msg) => {
             for (const dc of Object.values(dataChannelMap)) {
@@ -221,7 +209,6 @@
         function setupDataChannel(dc: RTCDataChannel, id: string): RTCDataChannel {
             dc.onopen = () => {
                 console.log(`DataChannel from ${id} open`);
-                requestLatencyUpdate()
             };
             dc.onclose = () => {
                 console.log(`DataChannel from ${id} closed`);
@@ -236,35 +223,7 @@
                 } else if (data.type === 'odometry' && odometry) {
                     odometry.updateOdometryData(data.odometry);
                 } else if (data.type === 'latency' && latency) {
-                    // Latency Calculation
-                    const tR2 = performance.now(); // Receiver's current time
-                    const {tR1, sender_local_clock} = data.latency;
-
-                    // Round Trip Time (RTT) and Network Latency
-                    const rtt = tR2 - tR1;
-                    const networkLatency = rtt / 2;
-                    let senderTime = sender_local_clock + networkLatency;
-
-                    videoElement.requestVideoFrameCallback((now: DOMHighResTimeStamp, framemeta: VideoFrameCallbackMetadata) => {
-                        if (framemeta.rtpTimestamp !== undefined) {
-                            const delaySinceVideoCallbackRequested = now - tR2;
-                            senderTime += delaySinceVideoCallbackRequested;
-
-                            // Calculate expected and actual video times
-                            const expectedVideoTimeMsec = senderTime;
-                            const actualVideoTimeMsec = Math.trunc(framemeta.rtpTimestamp / 90); // Convert RTP timestamp to milliseconds
-
-                            // Compute and update latency
-                            const latencyVal = expectedVideoTimeMsec - actualVideoTimeMsec;
-                            if (latency)
-                                latency.updateLatencyInfo({latency: latencyVal});
-                        } else {
-                            console.log('RTP timestamp is not available for this frame.');
-                        }
-                        setTimeout(() => {
-                            requestLatencyUpdate();
-                        }, 200);
-                    });
+                    latency.updateLatencyInfo(data.latency, videoElement);
                 } else if (data.type === 'log' && logs) {
                     logs.updateLogMessages(data.log);
                 }
@@ -378,7 +337,7 @@
                 </div>
             {/if}
             <div class="box" style="bottom: 15%; right: 5%;">
-                <Latency bind:this={latency}/>
+                <Latency bind:this={latency} sendMessage={sendMessage}/>
             </div>
         {/if}
 
