@@ -6,6 +6,7 @@
     import Odometry from './Odometry.svelte';
     import Messaging from './Messaging.svelte';
     import Latency from './Latency.svelte';
+    import Gamepad from './Gamepad.svelte';
 
     const DEV_MODE: boolean = false;
 
@@ -26,44 +27,8 @@
 
     let createOfferDisabled: boolean = true;
 
-    let controlMsg: any = null;
-
     let sendMessage: (msg: string) => void;
-    let sendControlMsg: () => void;
-
-    function handleGamepadConnected(event: GamepadEvent) {
-        console.log("Gamepad connected:", event.gamepad.id);
-    }
-
-    function handleGamepadDisconnected(event: GamepadEvent) {
-        console.log("Gamepad disconnected:", event.gamepad.id);
-        if (controlMsg && controlMsg.id === event.gamepad.id) {
-            controlMsg = null;
-        }
-    }
-
-    function updateGamepadState() {
-        const gamepads = navigator.getGamepads();
-        for (let gamepad of gamepads) {
-            if (gamepad &&
-                (!controlMsg ||
-                    controlMsg.id === gamepad.id ||
-                    gamepad.buttons[3].pressed)) {
-                controlMsg = {
-                    type: "control",
-                    id: gamepad.id,
-                    request_control: gamepad.buttons[0].pressed,
-                    reset_control: gamepad.buttons[1].pressed,
-                    previous_control: gamepad.buttons[2].pressed,
-                    forward: Math.abs(gamepad.axes[1]) >= 0.1 ? -gamepad.axes[1] : 0,
-                    rotation: Math.abs(gamepad.axes[2]) >= 0.1 ? -gamepad.axes[2] : 0
-                };
-                sendControlMsg();
-            }
-        }
-
-        requestAnimationFrame(updateGamepadState);
-    }
+    let sendControlMsg: (msg: string) => void;
 
     interface Message {
         id: string;
@@ -95,10 +60,10 @@
             }
         }
 
-        sendControlMsg = () => {
+        sendControlMsg = (msg) => {
             if (access === 'control') {
                 for (const dc of Object.values(dataChannelMap)) {
-                    dc.send(JSON.stringify(controlMsg));
+                    dc.send(msg);
                 }
             }
         }
@@ -272,16 +237,6 @@
                 characters.charAt(Math.floor(Math.random() * characters.length));
             return [...Array(length)].map(pickRandom).join('');
         }
-
-        window.addEventListener("gamepadconnected", handleGamepadConnected);
-        window.addEventListener("gamepaddisconnected", handleGamepadDisconnected);
-
-        updateGamepadState();
-
-        return () => {
-            window.removeEventListener("gamepadconnected", handleGamepadConnected);
-            window.removeEventListener("gamepaddisconnected", handleGamepadDisconnected);
-        };
     });
 
 </script>
@@ -343,11 +298,7 @@
 
         {#if DEV_MODE || access === 'control'}
             <div class="box" style="top: 5%; left: 50%; transform: translateX(-50%)">
-                {#if controlMsg === null}
-                    <p>No gamepads connected</p>
-                {:else}
-                    <p>Active {controlMsg.id}</p>
-                {/if}
+                <Gamepad sendControlMsg={sendControlMsg}/>
             </div>
         {/if}
     </div>
