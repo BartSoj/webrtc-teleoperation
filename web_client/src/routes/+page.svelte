@@ -12,14 +12,9 @@
 
     const DEV_MODE: boolean = false;
 
-    let connectionInfo: ConnectionInfo = {
-        auth: '',
-        access: 'observe',
-        offerId: '',
-        enableMessaging: false,
-    };
-
     let localId: string = '';
+    let activeId: string = '';
+    const peerConnectionMap: { [key: string]: PeerConnectionEntry } = {};
 
     let battery: Battery | undefined;
     let logs: Logs | undefined;
@@ -27,14 +22,23 @@
     let odometry: Odometry | undefined;
     let latency: Latency | undefined;
 
-    let peerConnectionState: string = 'new';
     const templateVideoSrc: string = 'default.mp4';
 
     let createOfferDisabled: boolean = true;
 
     let sendMessage: (msg: string) => void;
     let sendControlMsg: (msg: string) => void;
-    let handleOfferClick: () => void;
+    let sendOffer: (connectionInfo: ConnectionInfo) => void;
+
+    interface PeerConnectionEntry {
+        peerConnection: RTCPeerConnection;
+        videoStream: MediaStream | null;
+        dataChannel: RTCDataChannel | null;
+        state: string;
+        enableMessaging: boolean;
+        auth?: string;
+        access?: string;
+    }
 
     interface Message {
         id: string;
@@ -42,6 +46,20 @@
         description?: string;
         candidate?: string;
         mid?: string;
+    }
+
+    function setSrcObject(node: HTMLVideoElement, stream: MediaStream | null) {
+        node.srcObject = stream;
+        return {
+            update(newStream: MediaStream | null) {
+                if (node.srcObject !== newStream) {
+                    node.srcObject = newStream;
+                }
+            },
+            destroy() {
+                node.srcObject = null;
+            }
+        };
     }
 
     onMount(() => {
@@ -54,23 +72,15 @@
         const ip = location.hostname;
         const url = `ws://${ip}:8000/${localId}`;
 
-        const peerConnectionMap: { [key: string]: RTCPeerConnection } = {};
-        const dataChannelMap: { [key: string]: RTCDataChannel } = {};
-
-        const videoElement = document.getElementById('video-element') as HTMLVideoElement;
-
         sendMessage = (msg) => {
-            for (const dc of Object.values(dataChannelMap)) {
-                dc.send(msg);
-            }
+            const dc = peerConnectionMap[activeId]?.dataChannel;
+            dc?.send(msg);
         }
 
         sendControlMsg = (msg) => {
-            if (connectionInfo.access === 'control') {
-                for (const dc of Object.values(dataChannelMap)) {
-                    dc.send(msg);
-                }
-            }
+            const dc = peerConnectionMap[activeId]?.dataChannel;
+            if (peerConnectionMap[activeId]?.access === 'control')
+                dc?.send(msg);
         }
 
         console.log('Connecting to signaling...');
@@ -78,7 +88,7 @@
             .then((ws) => {
                 console.log('WebSocket connected, signaling ready');
                 createOfferDisabled = false;
-                handleOfferClick = () => offerPeerConnection(ws, connectionInfo.offerId);
+                sendOffer = (connectionInfo) => offerPeerConnection(ws, connectionInfo);
             })
             .catch((err) => console.error(err));
 
@@ -94,14 +104,17 @@
                     console.log(message);
                     const {id, type} = message;
 
-                    let pc = peerConnectionMap[id];
-                    if (!pc) {
+                    let entry = peerConnectionMap[id];
+                    if (!entry) {
                         if (type != 'offer') return;
 
                         // Create PeerConnection for answer
                         console.log(`Answering to ${id}`);
-                        pc = createPeerConnection(ws, id);
+                        createPeerConnection(ws, id);
+                        entry = peerConnectionMap[id]; // Ensure entry exists
                     }
+
+                    const {peerConnection: pc} = entry;
 
                     switch (type) {
                         case 'offer':
@@ -112,7 +125,7 @@
                             }).then(() => {
                                 if (type == 'offer') {
                                     // Send answer
-                                    sendLocalDescription(ws, id, pc, 'answer');
+                                    sendLocalDescription(ws, id, 'answer');
                                 }
                             });
                             break;
@@ -128,27 +141,45 @@
             });
         }
 
-        function offerPeerConnection(ws: WebSocket, id: string) {
+        function offerPeerConnection(ws: WebSocket, connectionInfo: ConnectionInfo) {
+            const id = connectionInfo.offerId;
             // Create PeerConnection
             console.log(`Offering to ${id}`);
-            const pc = createPeerConnection(ws, id);
+            createPeerConnection(ws, id);
+            peerConnectionMap[id].auth = connectionInfo.auth;
+            peerConnectionMap[id].access = connectionInfo.access;
+            peerConnectionMap[id].enableMessaging = connectionInfo.enableMessaging;
 
             // Create DataChannel
             const label = 'test';
             console.log(`Creating DataChannel with label "${label}"`);
-            const dc = pc.createDataChannel(label);
+            const dc = peerConnectionMap[id].peerConnection.createDataChannel(label);
             setupDataChannel(dc, id);
 
             // Send offer
-            sendLocalDescription(ws, id, pc, 'offer');
+            sendLocalDescription(ws, id, 'offer');
         }
 
         // Create and set up a PeerConnection
-        function createPeerConnection(ws: WebSocket, id: string): RTCPeerConnection {
+        function createPeerConnection(ws: WebSocket, id: string) {
             const pc = new RTCPeerConnection(config);
+
+            peerConnectionMap[id] = {
+                peerConnection: pc,
+                videoStream: null,
+                dataChannel: null,
+                state: 'new',
+                enableMessaging: false,
+            };
+
             pc.onconnectionstatechange = () => {
                 console.log(`Connection state: ${pc.connectionState}`);
-                peerConnectionState = pc.connectionState;
+                peerConnectionMap[id].state = pc.connectionState;
+                if (pc.connectionState === 'connected') {
+                    activeId = id;
+                } else {
+                    activeId = '';
+                }
             };
             pc.onicegatheringstatechange = () =>
                 console.log(`Gathering state: ${pc.iceGatheringState}`);
@@ -160,8 +191,7 @@
             };
             pc.ontrack = (evt) => {
                 console.log(`Track from ${id} received`);
-                videoElement.srcObject = evt.streams[0];
-                videoElement.play();
+                peerConnectionMap[id].videoStream = evt.streams[0];
             };
             pc.ondatachannel = (e) => {
                 const dc = e.channel;
@@ -170,9 +200,6 @@
 
                 dc.send(`Hello from ${localId}`);
             };
-
-            peerConnectionMap[id] = pc;
-            return pc;
         }
 
         // Setup a DataChannel
@@ -184,7 +211,7 @@
                 console.log(`DataChannel from ${id} closed`);
             };
             dc.onmessage = (e) => {
-                if (typeof e.data != 'string') return;
+                if (id !== activeId || typeof e.data != 'string') return;
                 const data = JSON.parse(e.data);
                 if (data.type === 'battery' && battery) {
                     battery.updateBatteryInfo(data.battery);
@@ -193,27 +220,29 @@
                 } else if (data.type === 'odometry' && odometry) {
                     odometry.updateOdometryData(data.odometry);
                 } else if (data.type === 'latency' && latency) {
+                    const videoElement = document.getElementById('video-element') as HTMLVideoElement;
                     latency.updateLatencyInfo(data.latency, videoElement);
                 } else if (data.type === 'log' && logs) {
                     logs.updateLogMessages(data.log);
                 }
             };
 
-            dataChannelMap[id] = dc;
+            peerConnectionMap[id].dataChannel = dc;
             return dc;
         }
 
-        function sendLocalDescription(ws: WebSocket, id: string, pc: RTCPeerConnection, type: 'offer' | 'answer') {
-            (type == 'offer' ? pc.createOffer() : pc.createAnswer())
-                .then((desc) => pc.setLocalDescription(desc))
+        function sendLocalDescription(ws: WebSocket, id: string, type: 'offer' | 'answer') {
+            const {peerConnection, auth, access} = peerConnectionMap[id];
+            (type == 'offer' ? peerConnection.createOffer() : peerConnection.createAnswer())
+                .then((desc) => peerConnection.setLocalDescription(desc))
                 .then(() => {
-                    const {sdp, type} = pc.localDescription!;
+                    const {sdp, type} = peerConnection.localDescription!;
                     ws.send(
                         JSON.stringify({
                             id,
                             type,
-                            auth: connectionInfo.auth,
-                            access: connectionInfo.access,
+                            auth,
+                            access,
                             description: sdp,
                         })
                     );
@@ -221,13 +250,14 @@
         }
 
         function sendLocalCandidate(ws: WebSocket, id: string, cand: RTCIceCandidate) {
+            const {auth, access} = peerConnectionMap[id];
             const {candidate, sdpMid} = cand;
             ws.send(
                 JSON.stringify({
                     id,
                     type: 'candidate',
-                    auth: connectionInfo.auth,
-                    access: connectionInfo.access,
+                    auth,
+                    access,
                     candidate,
                     mid: sdpMid,
                 })
@@ -249,7 +279,8 @@
 <main>
     <div class="video-container">
         <video id="video-element" muted autoplay playsinline loop
-               src={peerConnectionState === 'connected' ? null : templateVideoSrc}>
+               src={peerConnectionMap[activeId]?.state === 'connected' ? null : templateVideoSrc}
+               use:setSrcObject={peerConnectionMap[activeId]?.videoStream}>
         </video>
     </div>
     <div class="content">
@@ -258,14 +289,14 @@
             <p>{localId}</p>
         </div>
 
-        {#if DEV_MODE || peerConnectionState !== 'connected'}
+        {#if DEV_MODE || peerConnectionMap[activeId]?.state !== 'connected'}
             <h1>Origin Teleop</h1>
             <div class="box" style="top: 40%; left: 50%; transform: translateX(-50%);">
-                <Connection bind:connectionInfo {handleOfferClick} {createOfferDisabled}/>
+                <Connection {sendOffer} {createOfferDisabled}/>
             </div>
         {/if}
 
-        {#if DEV_MODE || peerConnectionState === 'connected'}
+        {#if DEV_MODE || peerConnectionMap[activeId]?.state === 'connected'}
             <div class="box" style="top: 5%; left: 5%;">
                 <Network bind:this={network}/>
             </div>
@@ -276,7 +307,7 @@
                 <Battery bind:this={battery}/>
             </div>
 
-            {#if connectionInfo.enableMessaging}
+            {#if peerConnectionMap[activeId]?.enableMessaging}
                 <div class="box" style="bottom: 15%; left: 50%; transform: translateX(-50%)">
                     <Messaging sendMessage={sendMessage}/>
                 </div>
@@ -289,7 +320,7 @@
             </div>
         {/if}
 
-        {#if DEV_MODE || connectionInfo.access === 'control'}
+        {#if DEV_MODE || peerConnectionMap[activeId]?.access === 'control'}
             <div class="box" style="top: 5%; left: 50%; transform: translateX(-50%)">
                 <Gamepad sendControlMsg={sendControlMsg}/>
             </div>

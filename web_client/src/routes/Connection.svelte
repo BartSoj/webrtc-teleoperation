@@ -1,9 +1,19 @@
 <script lang="ts">
     import type {ConnectionInfo} from "$lib";
 
-    export let connectionInfo: ConnectionInfo;
+    let connectionInfo: ConnectionInfo = {
+        offerId: '',
+        enableMessaging: false,
+        auth: '',
+        access: 'observe',
+    };
+
     export let createOfferDisabled = true;
-    export let handleOfferClick: () => void;
+    export let sendOffer: (connectionInfo: ConnectionInfo) => void;
+
+    function handleOfferClick() {
+        sendOffer(connectionInfo)
+    }
 
 </script>
 
