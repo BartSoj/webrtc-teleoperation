@@ -1,5 +1,7 @@
 <script lang="ts">
     import {onMount} from 'svelte';
+    import Connection from './Connection.svelte';
+    import type {ConnectionInfo} from "$lib";
     import Battery from './Battery.svelte';
     import Logs from './Logs.svelte';
     import Network from './Network.svelte';
@@ -10,11 +12,14 @@
 
     const DEV_MODE: boolean = false;
 
+    let connectionInfo: ConnectionInfo = {
+        auth: '',
+        access: 'observe',
+        offerId: '',
+        enableMessaging: false,
+    };
+
     let localId: string = '';
-    let auth: string = '';
-    let access: string = 'observe';
-    let offerId: string = '';
-    let enableMessaging: boolean = false;
 
     let battery: Battery | undefined;
     let logs: Logs | undefined;
@@ -29,6 +34,7 @@
 
     let sendMessage: (msg: string) => void;
     let sendControlMsg: (msg: string) => void;
+    let handleOfferClick: () => void;
 
     interface Message {
         id: string;
@@ -51,7 +57,6 @@
         const peerConnectionMap: { [key: string]: RTCPeerConnection } = {};
         const dataChannelMap: { [key: string]: RTCDataChannel } = {};
 
-        const offerBtn = document.getElementById('offerBtn') as HTMLInputElement;
         const videoElement = document.getElementById('video-element') as HTMLVideoElement;
 
         sendMessage = (msg) => {
@@ -61,7 +66,7 @@
         }
 
         sendControlMsg = (msg) => {
-            if (access === 'control') {
+            if (connectionInfo.access === 'control') {
                 for (const dc of Object.values(dataChannelMap)) {
                     dc.send(msg);
                 }
@@ -73,7 +78,7 @@
             .then((ws) => {
                 console.log('WebSocket connected, signaling ready');
                 createOfferDisabled = false;
-                offerBtn.onclick = () => offerPeerConnection(ws, offerId);
+                handleOfferClick = () => offerPeerConnection(ws, connectionInfo.offerId);
             })
             .catch((err) => console.error(err));
 
@@ -207,8 +212,8 @@
                         JSON.stringify({
                             id,
                             type,
-                            auth,
-                            access,
+                            auth: connectionInfo.auth,
+                            access: connectionInfo.access,
                             description: sdp,
                         })
                     );
@@ -221,8 +226,8 @@
                 JSON.stringify({
                     id,
                     type: 'candidate',
-                    auth,
-                    access,
+                    auth: connectionInfo.auth,
+                    access: connectionInfo.access,
                     candidate,
                     mid: sdpMid,
                 })
@@ -256,19 +261,7 @@
         {#if DEV_MODE || peerConnectionState !== 'connected'}
             <h1>Origin Teleop</h1>
             <div class="box" style="top: 40%; left: 50%; transform: translateX(-50%);">
-                <h2>Send an offer through signaling</h2>
-                <input type="text" id="auth" placeholder="auth" bind:value={auth} disabled={createOfferDisabled}/>
-                <input type="text" id="offerId" placeholder="remote ID" bind:value={offerId}
-                       disabled={createOfferDisabled}/>
-                <select id="access" bind:value={access} disabled={createOfferDisabled}>
-                    <option value="observe" selected>Observe</option>
-                    <option value="control">Control</option>
-                </select>
-                <div style="display: inline-flex; align-items: center; gap: 0.5em; white-space: nowrap;">
-                    <label for="enableMessagingCheckbox">Enable Messaging</label>
-                    <input type="checkbox" bind:checked={enableMessaging} id="enableMessagingCheckbox"/>
-                </div>
-                <input type="button" id="offerBtn" value="Offer" disabled={createOfferDisabled}/>
+                <Connection bind:connectionInfo {handleOfferClick} {createOfferDisabled}/>
             </div>
         {/if}
 
@@ -283,7 +276,7 @@
                 <Battery bind:this={battery}/>
             </div>
 
-            {#if enableMessaging}
+            {#if connectionInfo.enableMessaging}
                 <div class="box" style="bottom: 15%; left: 50%; transform: translateX(-50%)">
                     <Messaging sendMessage={sendMessage}/>
                 </div>
@@ -296,7 +289,7 @@
             </div>
         {/if}
 
-        {#if DEV_MODE || access === 'control'}
+        {#if DEV_MODE || connectionInfo.access === 'control'}
             <div class="box" style="top: 5%; left: 50%; transform: translateX(-50%)">
                 <Gamepad sendControlMsg={sendControlMsg}/>
             </div>
@@ -358,11 +351,6 @@
         top: 15%;
     }
 
-    label {
-        margin: 0.5em 0;
-        font-size: 0.8em;
-    }
-
     .box {
         position: absolute;
         background-color: rgba(0, 0, 0, 0.7);
@@ -388,6 +376,11 @@
         padding: 0.3em;
         width: 100%;
         box-sizing: border-box;
+    }
+
+    :global(.box label) {
+        margin: 0.5em 0;
+        font-size: 0.8em;
     }
 
 </style>
