@@ -1,4 +1,9 @@
 <script lang="ts">
+    import {messageStore} from "$lib/teleoperationStore";
+    import {onMount} from "svelte";
+
+    export let id: string;
+
     interface LogMessage {
         message: string;
         level: string;
@@ -24,6 +29,14 @@
             }
         };
     }
+
+    onMount(() => {
+        messageStore.subscribe(({id: messageId, message}) => {
+            if (id !== messageId) return;
+            const data = JSON.parse(message || "{}");
+            if (data?.type === 'log') updateLogMessages(data.log);
+        });
+    });
 </script>
 
 <div id="logs">

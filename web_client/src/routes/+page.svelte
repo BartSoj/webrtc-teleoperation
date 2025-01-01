@@ -1,8 +1,7 @@
 <script lang="ts">
     import {onMount} from 'svelte';
-    import Video from './Video.svelte'
+    import Video from './Video.svelte';
     import Connection from './Connection.svelte';
-    import type {ConnectionInfo} from "$lib";
     import Battery from './Battery.svelte';
     import Logs from './Logs.svelte';
     import Network from './Network.svelte';
@@ -10,297 +9,70 @@
     import Messaging from './Messaging.svelte';
     import Latency from './Latency.svelte';
     import Gamepad from './Gamepad.svelte';
+    import {
+        initializeTeleoperation,
+        localId,
+        peerConnectionMap
+    } from '$lib/teleoperationStore';
 
-    const DEV_MODE: boolean = false;
+    const DEV_MODE = false;
 
-    let localId: string = '';
-    let activeId: string = '';
-    const peerConnectionMap: { [key: string]: PeerConnectionEntry } = {};
+    $: activeId = (() => {
+        const keys = Object.keys($peerConnectionMap);
+        return keys.length > 0 ? keys[keys.length - 1] : "";
+    })();
 
-    let battery: Battery | undefined;
-    let logs: Logs | undefined;
-    let network: Network | undefined;
-    let odometry: Odometry | undefined;
-    let latency: Latency | undefined;
-
-    let createOfferDisabled: boolean = true;
-
-    let sendMessage: (msg: string) => void;
-    let sendControlMsg: (msg: string) => void;
-    let sendOffer: (connectionInfo: ConnectionInfo) => void;
-
-    interface PeerConnectionEntry {
-        peerConnection: RTCPeerConnection;
-        state: string;
-        enableMessaging: boolean;
-        videoStream?: MediaStream;
-        dataChannel?: RTCDataChannel;
-        auth?: string;
-        access?: string;
-    }
-
-    interface Message {
-        id: string;
-        type: string;
-        description?: string;
-        candidate?: string;
-        mid?: string;
-    }
+    let videoElement: HTMLVideoElement;
 
     onMount(() => {
-        const config: RTCConfiguration = {
-            iceServers: [{urls: 'stun:stun.l.google.com:19302'}],
-        };
-
-        localId = randomId(4);
-
-        const ip = location.hostname;
-        const url = `ws://${ip}:8000/${localId}`;
-
-        sendMessage = (msg) => {
-            const dc = peerConnectionMap[activeId]?.dataChannel;
-            dc?.send(msg);
-        }
-
-        sendControlMsg = (msg) => {
-            const dc = peerConnectionMap[activeId]?.dataChannel;
-            if (peerConnectionMap[activeId]?.access === 'control')
-                dc?.send(msg);
-        }
-
-        console.log('Connecting to signaling...');
-        openSignaling(url)
-            .then((ws) => {
-                console.log('WebSocket connected, signaling ready');
-                createOfferDisabled = false;
-                sendOffer = (connectionInfo) => offerPeerConnection(ws, connectionInfo);
-            })
-            .catch((err) => console.error(err));
-
-        function openSignaling(url: string): Promise<WebSocket> {
-            return new Promise((resolve, reject) => {
-                const ws = new WebSocket(url);
-                ws.onopen = () => resolve(ws);
-                ws.onerror = () => reject(new Error('WebSocket error'));
-                ws.onclose = () => console.error('WebSocket disconnected');
-                ws.onmessage = (e) => {
-                    if (typeof e.data != 'string') return;
-                    const message: Message = JSON.parse(e.data);
-                    console.log(message);
-                    const {id, type} = message;
-
-                    let entry = peerConnectionMap[id];
-                    if (!entry) {
-                        if (type != 'offer') return;
-
-                        // Create PeerConnection for answer
-                        console.log(`Answering to ${id}`);
-                        createPeerConnection(ws, id);
-                        entry = peerConnectionMap[id]; // Ensure entry exists
-                    }
-
-                    const {peerConnection: pc} = entry;
-
-                    switch (type) {
-                        case 'offer':
-                        case 'answer':
-                            pc.setRemoteDescription({
-                                sdp: message.description!,
-                                type: message.type as RTCSdpType,
-                            }).then(() => {
-                                if (type == 'offer') {
-                                    // Send answer
-                                    sendLocalDescription(ws, id, 'answer');
-                                }
-                            });
-                            break;
-
-                        case 'candidate':
-                            pc.addIceCandidate({
-                                candidate: message.candidate!,
-                                sdpMid: message.mid!,
-                            });
-                            break;
-                    }
-                };
-            });
-        }
-
-        function offerPeerConnection(ws: WebSocket, connectionInfo: ConnectionInfo) {
-            const id = connectionInfo.offerId;
-            // Create PeerConnection
-            console.log(`Offering to ${id}`);
-            createPeerConnection(ws, id);
-            peerConnectionMap[id].auth = connectionInfo.auth;
-            peerConnectionMap[id].access = connectionInfo.access;
-            peerConnectionMap[id].enableMessaging = connectionInfo.enableMessaging;
-
-            // Create DataChannel
-            const label = 'test';
-            console.log(`Creating DataChannel with label "${label}"`);
-            const dc = peerConnectionMap[id].peerConnection.createDataChannel(label);
-            setupDataChannel(dc, id);
-
-            // Send offer
-            sendLocalDescription(ws, id, 'offer');
-        }
-
-        // Create and set up a PeerConnection
-        function createPeerConnection(ws: WebSocket, id: string) {
-            const pc = new RTCPeerConnection(config);
-
-            peerConnectionMap[id] = {
-                peerConnection: pc,
-                state: 'new',
-                enableMessaging: false,
-            };
-
-            pc.onconnectionstatechange = () => {
-                console.log(`Connection state: ${pc.connectionState}`);
-                peerConnectionMap[id].state = pc.connectionState;
-                if (pc.connectionState === 'connected') {
-                    activeId = id;
-                } else {
-                    activeId = '';
-                }
-            };
-            pc.onicegatheringstatechange = () =>
-                console.log(`Gathering state: ${pc.iceGatheringState}`);
-            pc.onicecandidate = (e) => {
-                if (e.candidate && e.candidate.candidate) {
-                    // Send candidate
-                    sendLocalCandidate(ws, id, e.candidate);
-                }
-            };
-            pc.ontrack = (evt) => {
-                console.log(`Track from ${id} received`);
-                peerConnectionMap[id].videoStream = evt.streams[0];
-            };
-            pc.ondatachannel = (e) => {
-                const dc = e.channel;
-                console.log(`"DataChannel from ${id} received with label "${dc.label}"`);
-                setupDataChannel(dc, id);
-
-                dc.send(`Hello from ${localId}`);
-            };
-        }
-
-        // Setup a DataChannel
-        function setupDataChannel(dc: RTCDataChannel, id: string): RTCDataChannel {
-            dc.onopen = () => {
-                console.log(`DataChannel from ${id} open`);
-            };
-            dc.onclose = () => {
-                console.log(`DataChannel from ${id} closed`);
-            };
-            dc.onmessage = (e) => {
-                if (id !== activeId || typeof e.data != 'string') return;
-                const data = JSON.parse(e.data);
-                if (data.type === 'battery' && battery) {
-                    battery.updateBatteryInfo(data.battery);
-                } else if (data.type === 'network' && network) {
-                    network.updateNetworkInfo(data.network);
-                } else if (data.type === 'odometry' && odometry) {
-                    odometry.updateOdometryData(data.odometry);
-                } else if (data.type === 'latency' && latency) {
-                    const videoElement = document.getElementById('video-element') as HTMLVideoElement;
-                    latency.updateLatencyInfo(data.latency, videoElement);
-                } else if (data.type === 'log' && logs) {
-                    logs.updateLogMessages(data.log);
-                }
-            };
-
-            peerConnectionMap[id].dataChannel = dc;
-            return dc;
-        }
-
-        function sendLocalDescription(ws: WebSocket, id: string, type: 'offer' | 'answer') {
-            const {peerConnection, auth, access} = peerConnectionMap[id];
-            (type == 'offer' ? peerConnection.createOffer() : peerConnection.createAnswer())
-                .then((desc) => peerConnection.setLocalDescription(desc))
-                .then(() => {
-                    const {sdp, type} = peerConnection.localDescription!;
-                    ws.send(
-                        JSON.stringify({
-                            id,
-                            type,
-                            auth,
-                            access,
-                            description: sdp,
-                        })
-                    );
-                });
-        }
-
-        function sendLocalCandidate(ws: WebSocket, id: string, cand: RTCIceCandidate) {
-            const {auth, access} = peerConnectionMap[id];
-            const {candidate, sdpMid} = cand;
-            ws.send(
-                JSON.stringify({
-                    id,
-                    type: 'candidate',
-                    auth,
-                    access,
-                    candidate,
-                    mid: sdpMid,
-                })
-            );
-        }
-
-        // Helper function to generate a random ID
-        function randomId(length: number): string {
-            const characters =
-                '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
-            const pickRandom = () =>
-                characters.charAt(Math.floor(Math.random() * characters.length));
-            return [...Array(length)].map(pickRandom).join('');
-        }
+        initializeTeleoperation();
     });
-
 </script>
 
 <main>
-    <Video videoStream={peerConnectionMap[activeId]?.videoStream} templateVideoSrc="default.mp4"/>
+    <Video bind:videoElement videoStream={$peerConnectionMap[activeId]?.videoStream} templateVideoSrc="default.mp4"/>
     <div class="content">
         <div class="box" style="top: 5%; right: 5%;">
             <h2>Local ID</h2>
-            <p>{localId}</p>
+            <p>{$localId}</p>
+            <h2>Active ID</h2>
+            <p>{activeId}</p>
         </div>
 
-        {#if DEV_MODE || peerConnectionMap[activeId]?.state !== 'connected'}
+        {#if DEV_MODE || $peerConnectionMap[activeId]?.state !== 'connected'}
             <h1>Origin Teleop</h1>
             <div class="box" style="top: 40%; left: 50%; transform: translateX(-50%);">
-                <Connection {sendOffer} {createOfferDisabled}/>
+                <Connection/>
             </div>
         {/if}
 
-        {#if DEV_MODE || peerConnectionMap[activeId]?.state === 'connected'}
+        {#if DEV_MODE || $peerConnectionMap[activeId]?.state === 'connected'}
             <div class="box" style="top: 5%; left: 5%;">
-                <Network bind:this={network}/>
+                <Network id={activeId}/>
             </div>
             <div class="box" style="top: 30%; left: 5%;">
-                <Odometry bind:this={odometry}/>
+                <Odometry id={activeId}/>
             </div>
             <div class="box" style="bottom: 15%; left: 5%;">
-                <Battery bind:this={battery}/>
+                <Battery id={activeId}/>
             </div>
 
-            {#if peerConnectionMap[activeId]?.enableMessaging}
+            {#if $peerConnectionMap[activeId]?.enableMessaging}
                 <div class="box" style="bottom: 15%; left: 50%; transform: translateX(-50%)">
-                    <Messaging sendMessage={sendMessage}/>
+                    <Messaging id={activeId}/>
                 </div>
                 <div class="box" style="top: 30%; right: 5%;">
-                    <Logs bind:this={logs}/>
+                    <Logs id={activeId}/>
                 </div>
             {/if}
             <div class="box" style="bottom: 15%; right: 5%;">
-                <Latency bind:this={latency} sendMessage={sendMessage}/>
+                <Latency id={activeId} {videoElement}/>
             </div>
         {/if}
 
-        {#if DEV_MODE || peerConnectionMap[activeId]?.access === 'control'}
+        {#if DEV_MODE || $peerConnectionMap[activeId]?.access === 'control'}
             <div class="box" style="top: 5%; left: 50%; transform: translateX(-50%)">
-                <Gamepad sendControlMsg={sendControlMsg}/>
+                <Gamepad id={activeId}/>
             </div>
         {/if}
     </div>

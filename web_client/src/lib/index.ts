@@ -6,3 +6,13 @@ export interface ConnectionInfo {
     auth: string;
     access: 'observe' | 'control';
 }
+
+export interface PeerConnectionEntry {
+    peerConnection: RTCPeerConnection;
+    state: string;
+    enableMessaging: boolean;
+    videoStream?: MediaStream;
+    dataChannel?: RTCDataChannel;
+    auth?: string;
+    access?: string;
+}

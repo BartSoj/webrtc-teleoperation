@@ -1,4 +1,9 @@
 <script lang="ts">
+    import {onMount} from 'svelte';
+    import {messageStore} from "$lib/teleoperationStore";
+
+    export let id: string;
+
     interface BatteryInfo {
         voltage: number;
         state_of_charge: number;
@@ -28,6 +33,14 @@
             return "/icons/battery/battery-alert.png";
         }
     }
+
+    onMount(() => {
+        messageStore.subscribe(({id: messageId, message}) => {
+            if (id !== messageId) return;
+            const data = JSON.parse(message || "{}");
+            if (data?.type === 'battery') updateBatteryInfo(data.battery);
+        });
+    });
 </script>
 
 <div id="battery-info">

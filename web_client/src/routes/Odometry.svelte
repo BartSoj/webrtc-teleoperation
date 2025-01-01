@@ -1,4 +1,9 @@
 <script lang="ts">
+    import {messageStore} from "$lib/teleoperationStore";
+    import {onMount} from "svelte";
+
+    export let id: string;
+
     interface OdometryData {
         position: { x: number; y: number; z: number };
         orientation: { x: number; y: number; z: number; w: number };
@@ -16,6 +21,14 @@
     export function updateOdometryData(newOdometry: OdometryData) {
         odometry = newOdometry;
     }
+
+    onMount(() => {
+        messageStore.subscribe(({id: messageId, message}) => {
+            if (id !== messageId) return;
+            const data = JSON.parse(message || "{}");
+            if (data?.type === 'odometry') updateOdometryData(data.odometry);
+        });
+    });
 </script>
 
 <div id="odometry">

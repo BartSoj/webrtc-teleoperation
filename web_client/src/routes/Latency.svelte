@@ -1,4 +1,10 @@
 <script lang="ts">
+    import {messageStore, sendMessage} from "$lib/teleoperationStore";
+    import {onMount} from "svelte";
+
+    export let id: string;
+    export let videoElement: HTMLVideoElement;
+
     interface LatencyInfo {
         tR1: number;
         sender_local_clock: number;
@@ -9,18 +15,16 @@
 
     let latency: number = 0;
 
-    export let sendMessage: (msg: string) => void;
-
     setInterval(() => {
         const tR1 = Math.trunc(performance.now());
         const message = JSON.stringify({
             type: "latency",
             latency: {tR1: tR1}
         });
-        sendMessage(message);
+        $sendMessage(id, message);
     }, 2000); // Sends every 2 seconds
 
-    export function updateLatencyInfo(newLatencyInfo: LatencyInfo, videoElement: HTMLVideoElement) {
+    export function updateLatencyInfo(newLatencyInfo: LatencyInfo) {
         // Latency Calculation
         const tR2 = performance.now(); // Receiver's current time
         const {tR1, sender_local_clock} = newLatencyInfo;
@@ -57,6 +61,14 @@
 
         latency = Math.max(...latency_list);
     }
+
+    onMount(() => {
+        messageStore.subscribe(({id: messageId, message}) => {
+            if (id !== messageId) return;
+            const data = JSON.parse(message || "{}");
+            if (data?.type === 'latency') updateLatencyInfo(data.latency);
+        });
+    });
 </script>
 
 <div class="latency-info">

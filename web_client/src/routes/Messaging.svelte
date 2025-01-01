@@ -1,7 +1,9 @@
 <script lang="ts">
-    let message: string = '';
+    import {sendMessage} from '$lib/teleoperationStore';
 
-    export let sendMessage: (msg: string) => void;
+    export let id: string;
+
+    let message: string = '';
 
     function handleSendClick() {
         if (message === '') {
@@ -14,7 +16,7 @@
                 level: "0"
             }
         };
-        sendMessage(JSON.stringify(log_message));
+        $sendMessage(id, JSON.stringify(log_message));
         message = '';
     }
 </script>

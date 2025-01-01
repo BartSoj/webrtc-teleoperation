@@ -1,4 +1,9 @@
 <script lang="ts">
+    import {onMount} from 'svelte';
+    import {messageStore} from "$lib/teleoperationStore";
+
+    export let id: string;
+
     interface NetworkTelemetry {
         cellular_strength: number;
         wifi_strength: number;
@@ -12,6 +17,14 @@
     export function updateNetworkInfo(newNetworkInfo: NetworkTelemetry) {
         networkInfo = newNetworkInfo;
     }
+
+    onMount(() => {
+        messageStore.subscribe(({id: messageId, message}) => {
+            if (id !== messageId) return;
+            const data = JSON.parse(message || "{}");
+            if (data?.type === 'network') updateNetworkInfo(data.network);
+        });
+    });
 
     function getIcon(strength: number): string {
         switch (strength) {

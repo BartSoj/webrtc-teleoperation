@@ -1,9 +1,10 @@
 <script lang="ts">
     import {onMount} from "svelte";
+    import {sendControlMsg} from "$lib/teleoperationStore";
+
+    export let id: string;
 
     let controlMsg: any = null;
-
-    export let sendControlMsg: (msg: string) => void;
 
     function handleGamepadConnected(event: GamepadEvent) {
         console.log("Gamepad connected:", event.gamepad.id);
@@ -32,7 +33,7 @@
                     forward: Math.abs(gamepad.axes[1]) >= 0.1 ? -gamepad.axes[1] : 0,
                     rotation: Math.abs(gamepad.axes[2]) >= 0.1 ? -gamepad.axes[2] : 0
                 };
-                sendControlMsg(JSON.stringify(controlMsg));
+                $sendControlMsg(id, JSON.stringify(controlMsg));
             }
         }
 

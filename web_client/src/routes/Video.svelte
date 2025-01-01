@@ -1,6 +1,7 @@
 <script lang="ts">
     export let videoStream: MediaStream | undefined;
     export let templateVideoSrc: string;
+    export let videoElement: HTMLVideoElement;
 
     function setSrcObject(node: HTMLVideoElement, stream: MediaStream | undefined) {
         node.src = templateVideoSrc;
@@ -22,7 +23,15 @@
 </script>
 
 <div class="video-container">
-    <video id="video-element" muted autoplay playsinline loop use:setSrcObject={videoStream}>
+    <video
+            id="video-element"
+            muted
+            autoplay
+            playsinline
+            loop
+            bind:this={videoElement}
+            use:setSrcObject={videoStream}
+    >
     </video>
 </div>
 
