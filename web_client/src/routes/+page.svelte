@@ -1,5 +1,6 @@
 <script lang="ts">
     import {onMount} from 'svelte';
+    import Video from './Video.svelte'
     import Connection from './Connection.svelte';
     import type {ConnectionInfo} from "$lib";
     import Battery from './Battery.svelte';
@@ -22,8 +23,6 @@
     let odometry: Odometry | undefined;
     let latency: Latency | undefined;
 
-    const templateVideoSrc: string = 'default.mp4';
-
     let createOfferDisabled: boolean = true;
 
     let sendMessage: (msg: string) => void;
@@ -32,10 +31,10 @@
 
     interface PeerConnectionEntry {
         peerConnection: RTCPeerConnection;
-        videoStream: MediaStream | null;
-        dataChannel: RTCDataChannel | null;
         state: string;
         enableMessaging: boolean;
+        videoStream?: MediaStream;
+        dataChannel?: RTCDataChannel;
         auth?: string;
         access?: string;
     }
@@ -46,20 +45,6 @@
         description?: string;
         candidate?: string;
         mid?: string;
-    }
-
-    function setSrcObject(node: HTMLVideoElement, stream: MediaStream | null) {
-        node.srcObject = stream;
-        return {
-            update(newStream: MediaStream | null) {
-                if (node.srcObject !== newStream) {
-                    node.srcObject = newStream;
-                }
-            },
-            destroy() {
-                node.srcObject = null;
-            }
-        };
     }
 
     onMount(() => {
@@ -166,8 +151,6 @@
 
             peerConnectionMap[id] = {
                 peerConnection: pc,
-                videoStream: null,
-                dataChannel: null,
                 state: 'new',
                 enableMessaging: false,
             };
@@ -277,12 +260,7 @@
 </script>
 
 <main>
-    <div class="video-container">
-        <video id="video-element" muted autoplay playsinline loop
-               src={peerConnectionMap[activeId]?.state === 'connected' ? null : templateVideoSrc}
-               use:setSrcObject={peerConnectionMap[activeId]?.videoStream}>
-        </video>
-    </div>
+    <Video videoStream={peerConnectionMap[activeId]?.videoStream} templateVideoSrc="default.mp4"/>
     <div class="content">
         <div class="box" style="top: 5%; right: 5%;">
             <h2>Local ID</h2>
@@ -342,25 +320,6 @@
         width: 100vw;
         height: 100vh;
         overflow: hidden;
-    }
-
-    .video-container {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        background-color: black;
-        z-index: -1;
-    }
-
-    video {
-        width: 100%;
-        height: 100%;
-        object-fit: contain;
     }
 
     .content {
