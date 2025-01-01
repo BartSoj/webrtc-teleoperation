@@ -1,14 +1,14 @@
 <script lang="ts">
     import {onMount} from 'svelte';
-    import Video from './Video.svelte';
-    import Connection from './Connection.svelte';
-    import Battery from './Battery.svelte';
-    import Logs from './Logs.svelte';
-    import Network from './Network.svelte';
-    import Odometry from './Odometry.svelte';
-    import Messaging from './Messaging.svelte';
-    import Latency from './Latency.svelte';
-    import Gamepad from './Gamepad.svelte';
+    import Video from '$lib/components/Video.svelte';
+    import Connection from '$lib/components/Connection.svelte';
+    import Battery from '$lib/components/Battery.svelte';
+    import Logs from '$lib/components/Logs.svelte';
+    import Network from '$lib/components/Network.svelte';
+    import Odometry from '$lib/components/Odometry.svelte';
+    import Messaging from '$lib/components/Messaging.svelte';
+    import Latency from '$lib/components/Latency.svelte';
+    import Gamepad from '$lib/components/Gamepad.svelte';
     import {
         initializeTeleoperation,
         localId,
