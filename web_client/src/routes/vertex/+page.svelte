@@ -2,6 +2,7 @@
     import {onMount} from 'svelte';
     import Connection from "$lib/components/Connection.svelte";
     import Battery from "$lib/components/Battery.svelte";
+    import Plot from "$lib/components/Plot.svelte";
     import {
         initializeTeleoperation,
         localId,
@@ -10,6 +11,8 @@
     import SetShapeExample from "$lib/components/SetShapeExample.svelte";
 
     const DEV_MODE = false;
+
+    let showPlot = false;
 
     $: activeId = (() => {
         const keys = Object.keys($peerConnectionMap);
@@ -41,8 +44,22 @@
             <div class="box" style="bottom: 15%; left: 5%;">
                 <Battery id={activeId}/>
             </div>
-            <div class="box" style="bottom: 15%; left: 50%; transform: translateX(-50%);">
-                <SetShapeExample id={activeId}/>
+            {#if DEV_MODE || $peerConnectionMap[activeId]?.access === 'control'}
+                <div class="box" style="bottom: 15%; left: 50%; transform: translateX(-50%);">
+                    <SetShapeExample id={activeId}/>
+                </div>
+            {/if}
+        {/if}
+
+        <div class="box" style="top: 5%; left: 5%;">
+            <button on:click={() => showPlot=!showPlot}>
+                {showPlot ? 'Hide Plot' : 'Show Plot'}
+            </button>
+        </div>
+
+        {#if showPlot}
+            <div class="box" style="top: 50%; left: 50%; transform: translate(-50%, -50%);">
+                <Plot/>
             </div>
         {/if}
     </div>
@@ -87,8 +104,7 @@
         position: absolute;
         background-color: rgba(0, 0, 0, 0.7);
         border-radius: 10px;
-        padding: 0.5em 1em 0.5em 1em;
-        max-width: 300px;
+        padding: 1em 1em 1em 1em;
         width: max-content;
     }
 
@@ -100,6 +116,15 @@
 
     :global(.box p) {
         margin: 0.3em 0;
+        font-size: 0.8em;
+    }
+
+    :global(.box button) {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        border: none;
+        cursor: pointer;
         font-size: 0.8em;
     }
 
