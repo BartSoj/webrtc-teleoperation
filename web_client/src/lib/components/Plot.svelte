@@ -1,26 +1,51 @@
 <script lang="ts">
-    import {onMount} from 'svelte';
+    import {messageStore} from "$lib/teleoperationStore";
+    import {onMount} from "svelte";
+
+    let Plotly: any;
+
+    interface Position {
+        x: number;
+        y: number;
+        z: number;
+    }
+
+    let positionData: Record<string, { x: number[], y: number[], z: number[] }> = {};
 
     let plotContainer: HTMLDivElement;
 
-    const generateCircularData = (numPoints: number, radius: number): { x: number[]; y: number[]; z: number[] } => {
-        const theta = Array.from({length: numPoints}, (_, i) => (i / numPoints) * 2 * Math.PI);
-        const x = theta.map(t => radius * Math.cos(t));
-        const y = theta.map(t => radius * Math.sin(t));
-        const z = Array(numPoints).fill(0); // Circle in the XY plane
-        return {x, y, z};
-    };
+    function redrawPlot() {
+        const layout: Partial<Plotly.Layout> = {
+            autosize: true,
+            uirevision: 'true',
+            scene: {
+                aspectmode: "manual",
+                aspectratio: {
+                    x: 1, y: 1, z: 1,
+                },
+                xaxis: {
+                    nticks: 1,
+                    range: [-10, 10],
+                },
+                yaxis: {
+                    nticks: 1,
+                    range: [-10, 10],
+                },
+                zaxis: {
+                    nticks: 1,
+                    range: [-10, 10],
+                }
+            },
+        };
 
-    // Generate data for a circle with 100 points and radius 5
-    const {x, y, z}: { x: number[]; y: number[]; z: number[] } = generateCircularData(100, 5);
-
-    let data: Array<Partial<Plotly.ScatterData>> = [
-        {
-            x,
-            y,
-            z,
+        let data: Array<Partial<Plotly.ScatterData>> = [];
+        data = Object.keys(positionData).map((id) => ({
+            x: positionData[id].x,
+            y: positionData[id].y,
+            z: positionData[id].z,
             type: 'scatter3d',
             mode: 'lines+markers',
+            name: id,
             marker: {
                 color: 'blue',
                 size: 1.5,
@@ -30,27 +55,43 @@
                 color: 'blue',
                 width: 2,
             },
-        },
-    ]; // Default plot data
+        }));
 
-    const redrawPlot = async (): Promise<void> => {
-        const module = await import('plotly.js-dist');
-        let Plotly = module.default;
+        Plotly.newPlot(plotContainer, data, layout);
+    }
 
-        const layout: Partial<Plotly.Layout> = {
-            autosize: true,
-            margin: {l: 0, r: 0, b: 0, t: 0},
-        };
-
-        if (plotContainer && typeof Plotly !== 'undefined') {
-            await Plotly.newPlot(plotContainer, data, layout, {showSendToCloud: true});
+    function updatePositionData(id: string, newPosition: Position) {
+        if (!Plotly) return;
+        if (!positionData[id]) {
+            console.log("This should only be called when new peer connection is added");
+            positionData[id] = {x: [], y: [], z: []};
+            redrawPlot();
         }
-    };
+        positionData[id].x.push(newPosition.x);
+        positionData[id].y.push(newPosition.y);
+        positionData[id].z.push(newPosition.z);
 
-    onMount(async (): Promise<void> => {
-        await redrawPlot();
-        window.addEventListener('resize', redrawPlot);
+        Plotly.extendTraces(
+            plotContainer,
+            {
+                x: [[newPosition.x]],
+                y: [[newPosition.y]],
+                z: [[newPosition.z]],
+            },
+            [Object.keys(positionData).indexOf(id)]
+        );
+    }
+
+    onMount(async () => {
+        const module = await import('plotly.js-dist');
+        Plotly = module.default;
     });
+
+    $: {
+        const {id, message} = $messageStore;
+        const data = JSON.parse(message || "{}");
+        if (data?.type === "state_reference") updatePositionData(id, data.state_reference.pose.position);
+    }
 </script>
 
 <div id="plot">

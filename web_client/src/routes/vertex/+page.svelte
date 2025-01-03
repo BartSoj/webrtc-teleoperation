@@ -9,6 +9,7 @@
         peerConnectionMap
     } from '$lib/teleoperationStore';
     import SetShapeExample from "$lib/components/SetShapeExample.svelte";
+    import StateReference from "$lib/components/StateReference.svelte";
 
     const DEV_MODE = false;
 
@@ -41,6 +42,19 @@
         {/if}
 
         {#if DEV_MODE || $peerConnectionMap[activeId]?.state === 'connected'}
+            <div class="box" style="top: 5%; left: 5%;">
+                <button on:click={() => showPlot=!showPlot}>
+                    {showPlot ? 'Hide Plot' : 'Show Plot'}
+                </button>
+            </div>
+            {#if showPlot}
+                <div class="box" style="top: 50%; left: 50%; transform: translate(-50%, -50%);">
+                    <Plot/>
+                </div>
+            {/if}
+            <div class="box" style="top: 30%; left: 5%;">
+                <StateReference id={activeId}/>
+            </div>
             <div class="box" style="bottom: 15%; left: 5%;">
                 <Battery id={activeId}/>
             </div>
@@ -49,18 +63,6 @@
                     <SetShapeExample id={activeId}/>
                 </div>
             {/if}
-        {/if}
-
-        <div class="box" style="top: 5%; left: 5%;">
-            <button on:click={() => showPlot=!showPlot}>
-                {showPlot ? 'Hide Plot' : 'Show Plot'}
-            </button>
-        </div>
-
-        {#if showPlot}
-            <div class="box" style="top: 50%; left: 50%; transform: translate(-50%, -50%);">
-                <Plot/>
-            </div>
         {/if}
     </div>
 </main>

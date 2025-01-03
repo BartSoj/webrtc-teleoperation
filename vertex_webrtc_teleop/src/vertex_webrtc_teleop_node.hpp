@@ -1,6 +1,7 @@
 #pragma once
 
 #include <avular_mavros_msgs/msg/battery.hpp>
+#include <avular_mavros_msgs/msg/state_reference.hpp>
 #include <avular_mavros_msgs/srv/set_shape_example.hpp>
 #include <rclcpp/rclcpp.hpp>
 
@@ -35,7 +36,16 @@ private:
      */
     void batteryInfoTopicCallback(const avular_mavros_msgs::msg::Battery &msg) const;
 
+    /**
+     * @brief Callback function for processing incoming state reference messages.
+     * @param msg The vertex state reference message.
+     *
+     * Broadcasts the state reference.
+     */
+    void stateReferenceTopicCallback(const avular_mavros_msgs::msg::StateReference &msg) const;
+
     rclcpp::Client<avular_mavros_msgs::srv::SetShapeExample>::SharedPtr set_shape_example_service_;
     rclcpp::Subscription<avular_mavros_msgs::msg::Battery>::SharedPtr battery_info_subscription_;
+    rclcpp::Subscription<avular_mavros_msgs::msg::StateReference>::SharedPtr state_reference_subscription_;
     std::shared_ptr<Teleoperation> teleoperation_;
 };

@@ -14,6 +14,9 @@ VertexWebrtcTeleopNode::VertexWebrtcTeleopNode(const rclcpp::NodeOptions &option
     battery_info_subscription_ = this->create_subscription<avular_mavros_msgs::msg::Battery>(
         "/robot/battery/info", 10, std::bind(&VertexWebrtcTeleopNode::batteryInfoTopicCallback, this, _1));
 
+    state_reference_subscription_ = this->create_subscription<avular_mavros_msgs::msg::StateReference>(
+        "/robot/send/state_reference", 10, std::bind(&VertexWebrtcTeleopNode::stateReferenceTopicCallback, this, _1));
+
     set_shape_example_service_ =
         this->create_client<avular_mavros_msgs::srv::SetShapeExample>("/robot/set_shape_example");
 
@@ -87,4 +90,25 @@ void VertexWebrtcTeleopNode::batteryInfoTopicCallback(const avular_mavros_msgs::
                          {"battery", {{"voltage", msg.voltage}, {"state_of_charge", msg.state_of_charge}}}};
 
     teleoperation_->broadcastMessage(battery_data.dump());
+}
+
+void VertexWebrtcTeleopNode::stateReferenceTopicCallback(const avular_mavros_msgs::msg::StateReference &msg) const
+{
+    json state_reference_data = {
+        {"type", "state_reference"},
+        {"state_reference",
+         {{"translation_mode", msg.translation_mode},
+          {"orientation_mode", msg.orientation_mode},
+          {"pose",
+           {{"position", {{"x", msg.pose.position.x}, {"y", msg.pose.position.y}, {"z", msg.pose.position.z}}},
+            {"orientation",
+             {{"x", msg.pose.orientation.x},
+              {"y", msg.pose.orientation.y},
+              {"z", msg.pose.orientation.z},
+              {"w", msg.pose.orientation.w}}}}},
+          {"velocity", {{"x", msg.velocity.linear.x}, {"y", msg.velocity.linear.y}, {"z", msg.velocity.linear.z}}},
+          {"acceleration",
+           {{"x", msg.acceleration.linear.x}, {"y", msg.acceleration.linear.y}, {"z", msg.acceleration.linear.z}}}}}};
+
+    teleoperation_->broadcastMessage(state_reference_data.dump());
 }
