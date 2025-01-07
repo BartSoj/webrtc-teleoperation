@@ -1,7 +1,7 @@
 <script lang="ts">
     import {onMount} from 'svelte';
     import Video from '$lib/components/Video.svelte';
-    import Connection from '$lib/components/Connection.svelte';
+    import CreateConnection from '$lib/components/CreateConnection.svelte';
     import Battery from '$lib/components/Battery.svelte';
     import Logs from '$lib/components/Logs.svelte';
     import Network from '$lib/components/Network.svelte';
@@ -33,16 +33,14 @@
     <Video bind:videoElement videoStream={$peerConnectionMap[activeId]?.videoStream} templateVideoSrc="default.mp4"/>
     <div class="content">
         <div class="box" style="top: 5%; right: 5%;">
-            <h2>Local ID</h2>
-            <p>{$localId}</p>
-            <h2>Active ID</h2>
-            <p>{activeId}</p>
+            <p>Local ID: {$localId}</p>
+            <p>Active ID: {activeId}</p>
         </div>
 
         {#if DEV_MODE || $peerConnectionMap[activeId]?.state !== 'connected'}
             <h1>Origin Teleop</h1>
             <div class="box" style="top: 40%; left: 50%; transform: translateX(-50%);">
-                <Connection/>
+                <CreateConnection/>
             </div>
         {/if}
 

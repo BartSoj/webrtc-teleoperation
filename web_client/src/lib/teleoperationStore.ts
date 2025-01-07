@@ -101,6 +101,7 @@ export function initializeTeleoperation(): void {
 
     function offerPeerConnection(ws: WebSocket, connectionInfo: ConnectionInfo) {
         const id = connectionInfo.offerId;
+        if (get(peerConnectionMap)[id]) return;
 
         console.log(`Offering to ${id}`);
         createPeerConnection(ws, id);
@@ -129,15 +130,34 @@ export function initializeTeleoperation(): void {
             },
         });
 
+        setTimeout(() => {
+            if (pc.connectionState === 'new') {
+                console.log(`${id} Closing connection`);
+                pc.close();
+                peerConnectionMap.update((map) => {
+                    delete map[id];
+                    return map;
+                });
+            }
+        }, 3000)
+
         pc.onconnectionstatechange = () => {
-            console.log(`Connection state: ${pc.connectionState}`);
+            console.log(`${id} Connection state: ${pc.connectionState}`);
             peerConnectionMap.update((map) => {
-                if (map[id]) map[id].state = pc.connectionState;
+                if (map[id]) {
+                    map[id].state = pc.connectionState;
+
+                    if (pc.connectionState === 'failed' || pc.connectionState === 'disconnected') {
+                        console.log(`${id} Closing connection`);
+                        pc.close();
+                        delete map[id];
+                    }
+                }
                 return map;
             });
         };
 
-        pc.onicegatheringstatechange = () => console.log(`Gathering state: ${pc.iceGatheringState}`);
+        pc.onicegatheringstatechange = () => console.log(`${id} Gathering state: ${pc.iceGatheringState}`);
         pc.onicecandidate = (e) => {
             if (e.candidate && e.candidate.candidate) {
                 sendLocalCandidate(ws, id, e.candidate);
@@ -145,7 +165,7 @@ export function initializeTeleoperation(): void {
         };
 
         pc.ontrack = (evt) => {
-            console.log(`Track from ${id} received`);
+            console.log(`${id} Track received`);
             peerConnectionMap.update((map) => {
                 if (map[id]) map[id].videoStream = evt.streams[0];
                 return map;
@@ -154,7 +174,7 @@ export function initializeTeleoperation(): void {
 
         pc.ondatachannel = (e) => {
             const dc = e.channel;
-            console.log(`"DataChannel from ${id} received with label "${dc.label}"`);
+            console.log(`${id} DataChannel received with label "${dc.label}"`);
             setupDataChannel(dc, id);
         };
     }

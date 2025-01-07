@@ -1,6 +1,7 @@
 <script lang="ts">
     import {onMount} from 'svelte';
-    import Connection from "$lib/components/Connection.svelte";
+    import CreateConnection from "$lib/components/CreateConnection.svelte";
+    import SetActiveConnection from "$lib/components/SetActiveConnection.svelte";
     import Battery from "$lib/components/Battery.svelte";
     import Plot from "$lib/components/Plot.svelte";
     import {
@@ -15,7 +16,17 @@
 
     let showPlot = false;
 
+    $: showCreateConnection = (() => {
+        return activeId === "";
+    })();
+
+    let newActiveId = "";
     $: activeId = (() => {
+        if (newActiveId) {
+            const id = newActiveId;
+            newActiveId = "";
+            return id;
+        }
         const keys = Object.keys($peerConnectionMap);
         return keys.length > 0 ? keys[keys.length - 1] : "";
     })();
@@ -28,30 +39,49 @@
 <main>
     <div class="content">
         <div class="box" style="top: 5%; right: 5%;">
-            <h2>Local ID</h2>
-            <p>{$localId}</p>
-            <h2>Active ID</h2>
-            <p>{activeId}</p>
+            <p>Local ID: {$localId}</p>
+            <p>Active ID: {activeId}</p>
         </div>
 
-        {#if DEV_MODE || $peerConnectionMap[activeId]?.state !== 'connected'}
+        {#if DEV_MODE || showCreateConnection}
             <h1>Vertex Teleop</h1>
             <div class="box" style="top: 40%; left: 50%; transform: translateX(-50%);">
-                <Connection/>
+                <CreateConnection/>
             </div>
         {/if}
 
-        {#if DEV_MODE || $peerConnectionMap[activeId]?.state === 'connected'}
+        {#if DEV_MODE || Object.keys($peerConnectionMap).length > 0}
             <div class="box" style="top: 5%; left: 5%;">
+                <h2>Plot</h2>
                 <button on:click={() => showPlot=!showPlot}>
-                    {showPlot ? 'Hide Plot' : 'Show Plot'}
+                    {showPlot ? 'Hide' : 'Show'}
                 </button>
+            </div>
+            <div class="box" style="bottom: 5%; right: 5%;">
+                <h2>Connection</h2>
+                <div class="button-container">
+                    <SetActiveConnection bind:newActiveId/>
+                    <div>
+                        <button on:click={() => showCreateConnection=!showCreateConnection}>
+                            {showCreateConnection ? 'Discard' : 'Add'}
+                        </button>
+                    </div>
+                </div>
             </div>
             {#if showPlot}
                 <div class="box" style="top: 50%; left: 50%; transform: translate(-50%, -50%);">
                     <Plot/>
                 </div>
             {/if}
+        {/if}
+
+        {#if DEV_MODE || $peerConnectionMap[activeId]?.state !== 'connected' && !showCreateConnection}
+            <div class="box" style="top: 40%; left: 50%; transform: translateX(-50%);">
+                <h2>Connecting...</h2>
+            </div>
+        {/if}
+
+        {#if DEV_MODE || $peerConnectionMap[activeId]?.state === 'connected' && !showCreateConnection}
             <div class="box" style="top: 30%; left: 5%;">
                 <StateReference id={activeId}/>
             </div>
@@ -60,6 +90,7 @@
             </div>
             {#if DEV_MODE || $peerConnectionMap[activeId]?.access === 'control'}
                 <div class="box" style="bottom: 15%; left: 50%; transform: translateX(-50%);">
+                    <h2>Shape</h2>
                     <SetShapeExample id={activeId}/>
                 </div>
             {/if}
@@ -121,6 +152,13 @@
         font-size: 0.8em;
     }
 
+    :global(.box .button-container) {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 12px; /* Space between buttons */
+    }
+
     :global(.box button) {
         width: 60px;
         height: 60px;
@@ -128,6 +166,13 @@
         border: none;
         cursor: pointer;
         font-size: 0.8em;
+        transition: background-color 0.3s ease-in-out, transform 0.2s ease-in-out; /* Adds hover and press effects */
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Optional shadow for a modern look */
+
+    }
+
+    :global(.box button:active) {
+        transform: scale(0.95);
     }
 
     :global(input, select) {

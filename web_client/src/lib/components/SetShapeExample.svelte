@@ -45,9 +45,9 @@
     }
 </script>
 
-<div id="setShapeExample">
+<div id="setShapeExample" class="button-container">
     <!-- Buttons group toggled by visibility -->
-    <div class={areButtonsVisible ? "" : "hidden"}>
+    <div style={areButtonsVisible ? "" : "display: none"}>
         <button class="circle-button" on:click={() => handleSendClick(flat_circle)}>Flat</button>
         <button class="circle-button" on:click={() => handleSendClick(vertical_circle)}>Vertical</button>
         <button class="circle-button" on:click={() => handleSendClick(stop)}>Stop</button>
@@ -58,32 +58,3 @@
         {areButtonsVisible ? "Collapse" : "Expand"}
     </button>
 </div>
-
-<style>
-    #setShapeExample {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        gap: 12px; /* Space between buttons */
-    }
-
-    .circle-button {
-        width: 60px; /* Width of the circle button */
-        height: 60px; /* Height of the circle button */
-        border-radius: 50%; /* Makes the button a circle */
-        border: none;
-        cursor: pointer;
-        transition: background-color 0.3s ease-in-out, transform 0.2s ease-in-out; /* Adds hover and press effects */
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Optional shadow for a modern look */
-        margin: 0.3em 0;
-        font-size: 0.8em;
-    }
-
-    .circle-button:active {
-        transform: scale(0.95);
-    }
-
-    .hidden {
-        display: none; /* Hide the element */
-    }
-</style>
